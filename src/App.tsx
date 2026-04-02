@@ -18,7 +18,9 @@ import {
   ChevronRight,
   TrendingDown,
   Target,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Zap,
+  ArrowUpCircle
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -35,6 +37,7 @@ import {
   AreaChart,
   Area
 } from 'recharts';
+import { GoogleGenAI } from "@google/genai";
 import { cn } from './lib/utils';
 import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppSettings } from './types';
 
@@ -96,6 +99,13 @@ export default function App() {
     setData(prev => ({
       ...prev,
       stocks: [...prev.stocks, newStock]
+    }));
+  };
+
+  const addFund = (newFund: MutualFund) => {
+    setData(prev => ({
+      ...prev,
+      mutualFunds: [...prev.mutualFunds, newFund]
     }));
   };
 
@@ -186,6 +196,7 @@ export default function App() {
           <NavItem active={activeTab === 'mf'} onClick={() => setActiveTab('mf')} icon={<PieChartIcon size={20} />} label="Mutual Funds" />
           <NavItem active={activeTab === 'gold'} onClick={() => setActiveTab('gold')} icon={<Coins size={20} />} label="Metals" />
           <NavItem active={activeTab === 'income'} onClick={() => setActiveTab('income')} icon={<Briefcase size={20} />} label="Income" />
+          <NavItem active={activeTab === 'sip-consolidated'} onClick={() => setActiveTab('sip-consolidated')} icon={<Zap size={20} />} label="SIP Tracker" />
           <NavItem active={activeTab === 'projection'} onClick={() => setActiveTab('projection')} icon={<LineChart size={20} />} label="Projection" />
           <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<SettingsIcon size={20} />} label="Settings" />
         </div>
@@ -210,9 +221,10 @@ export default function App() {
 
         {activeTab === 'dashboard' && <DashboardView totals={totals} chartData={chartData} data={data} />}
         {activeTab === 'stocks' && <StocksView stocks={data.stocks} onAddStock={addStock} />}
-        {activeTab === 'mf' && <MutualFundsView funds={data.mutualFunds} />}
+        {activeTab === 'mf' && <MutualFundsView funds={data.mutualFunds} onAddFund={addFund} />}
         {activeTab === 'gold' && <MetalsView metals={data.metals} onUpdateRate={updateMetalRate} />}
         {activeTab === 'income' && <IncomeView income={data.income} businesses={data.businesses} />}
+        {activeTab === 'sip-consolidated' && <ConsolidatedSIPView funds={data.mutualFunds} />}
         {activeTab === 'projection' && <ProjectionView netWorth={totals.netWorth} monthlySavings={totals.totalIncome * 0.4} />}
         {activeTab === 'settings' && <SettingsView settings={settings} onSave={setSettings} />}
       </main>
@@ -521,9 +533,147 @@ function StocksView({ stocks, onAddStock }: { stocks: Stock[], onAddStock: (s: S
   );
 }
 
-function MutualFundsView({ funds }: { funds: MutualFund[] }) {
+function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund: (f: MutualFund) => void }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newFund, setNewFund] = useState<Partial<MutualFund>>({ sipDate: '15th', stepUp: 10 });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newFund.name && newFund.sipAmount && newFund.totalInvested) {
+      onAddFund({
+        id: Math.random().toString(36).substr(2, 9),
+        name: newFund.name,
+        sipAmount: Number(newFund.sipAmount),
+        totalInvested: Number(newFund.totalInvested),
+        nav: Number(newFund.nav || 0),
+        sipDate: newFund.sipDate || '15th',
+        stepUp: Number(newFund.stepUp || 0)
+      });
+      setShowAddForm(false);
+      setNewFund({ sipDate: '15th', stepUp: 10 });
+    }
+  };
+
+  const FUND_OPTIONS = [
+    "Parag Parikh Flexi Cap Fund",
+    "Mirae Asset Large Cap Fund",
+    "Quant Small Cap Fund",
+    "HDFC Index S&P BSE Sensex Fund",
+    "ICICI Prudential Bluechip Fund",
+    "Axis Bluechip Fund",
+    "SBI Bluechip Fund",
+    "Nippon India Large Cap Fund",
+    "Kotak Bluechip Fund",
+    "UTI Mastershare Unit Scheme"
+  ];
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Your Mutual Funds</h3>
+        <button 
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+        >
+          <Plus size={18} />
+          Add Fund
+        </button>
+      </div>
+
+      {showAddForm && (
+        <form onSubmit={handleSubmit} className="bg-[#141414] p-6 rounded-2xl border border-emerald-500/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Fund Name</label>
+            <select 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.name || ''}
+              onChange={e => setNewFund({...newFund, name: e.target.value})}
+              required
+            >
+              <option value="">Select a Fund</option>
+              {FUND_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+              <option value="Other">Other (Manual Entry)</option>
+            </select>
+          </div>
+
+          {newFund.name === 'Other' && (
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 font-bold uppercase">Custom Fund Name</label>
+              <input 
+                placeholder="Enter Fund Name" 
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                onChange={e => setNewFund({...newFund, name: e.target.value})}
+                required
+              />
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Monthly SIP Amount</label>
+            <input 
+              type="number" 
+              placeholder="SIP Amount" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.sipAmount || ''}
+              onChange={e => setNewFund({...newFund, sipAmount: Number(e.target.value)})}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Total Invested Value</label>
+            <input 
+              type="number" 
+              placeholder="Total Invested" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.totalInvested || ''}
+              onChange={e => setNewFund({...newFund, totalInvested: Number(e.target.value)})}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Current NAV (Optional)</label>
+            <input 
+              type="number" 
+              step="0.01"
+              placeholder="NAV" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.nav || ''}
+              onChange={e => setNewFund({...newFund, nav: Number(e.target.value)})}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">SIP Date</label>
+            <input 
+              placeholder="e.g. 15th" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.sipDate || ''}
+              onChange={e => setNewFund({...newFund, sipDate: e.target.value})}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Step-up %</label>
+            <input 
+              type="number" 
+              placeholder="Step-up %" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newFund.stepUp || ''}
+              onChange={e => setNewFund({...newFund, stepUp: Number(e.target.value)})}
+              required
+            />
+          </div>
+
+          <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">Save Fund</button>
+          </div>
+        </form>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {funds.map(fund => (
           <div key={fund.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 relative overflow-hidden group">
@@ -557,10 +707,15 @@ function MutualFundsView({ funds }: { funds: MutualFund[] }) {
             </div>
           </div>
         ))}
-        <button className="border-2 border-dashed border-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-emerald-500/50 hover:text-emerald-500 transition-all">
-          <Plus size={32} />
-          <span className="font-medium">Add New Fund</span>
-        </button>
+        {!showAddForm && (
+          <button 
+            onClick={() => setShowAddForm(true)}
+            className="border-2 border-dashed border-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-gray-500 hover:border-emerald-500/50 hover:text-emerald-500 transition-all"
+          >
+            <Plus size={32} />
+            <span className="font-medium">Add New Fund</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -844,6 +999,121 @@ function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s:
           <li>Copy the Web App URL and paste it above.</li>
           <li>Your data will now be stored and synced with your Google Sheet!</li>
         </ol>
+      </div>
+    </div>
+  );
+}
+
+function ConsolidatedSIPView({ funds }: { funds: MutualFund[] }) {
+  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
+  const totalMonthlySIP = funds.reduce((acc, f) => acc + f.sipAmount, 0);
+  const totalInvested = funds.reduce((acc, f) => acc + f.totalInvested, 0);
+
+  const getAiSuggestion = async () => {
+    setIsAiLoading(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+      const prompt = `I have the following mutual fund SIPs: ${JSON.stringify(funds.map(f => ({ name: f.name, amount: f.sipAmount, stepUp: f.stepUp })))}. 
+      My total monthly SIP is ₹${totalMonthlySIP}. 
+      Please provide a concise financial suggestion for "Step-up SIP" strategy. 
+      Suggest specific step-up percentages or amounts for each fund to beat inflation and reach long-term goals faster. 
+      Keep the response professional, encouraging, and formatted in clear bullet points.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      setAiSuggestion(response.text || "Unable to generate suggestion at this time.");
+    } catch (error) {
+      console.error("AI Error:", error);
+      setAiSuggestion("Failed to connect to AI service. Please check your API key.");
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl">
+          <p className="text-emerald-500 text-sm font-bold uppercase mb-1">Total Monthly SIP</p>
+          <h4 className="text-3xl font-bold text-white">₹{totalMonthlySIP.toLocaleString()}</h4>
+        </div>
+        <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-2xl">
+          <p className="text-blue-500 text-sm font-bold uppercase mb-1">Total MF Investment</p>
+          <h4 className="text-3xl font-bold text-white">₹{totalInvested.toLocaleString()}</h4>
+        </div>
+      </div>
+
+      <div className="bg-[#141414] rounded-2xl border border-gray-800 overflow-hidden">
+        <div className="p-6 border-b border-gray-800 flex justify-between items-center">
+          <h3 className="text-lg font-semibold">SIP Consolidation Table</h3>
+          <span className="text-xs text-gray-500 font-bold uppercase">{funds.length} Active SIPs</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
+                <th className="px-6 py-4 font-semibold">Fund Name</th>
+                <th className="px-6 py-4 font-semibold text-right">SIP Amount</th>
+                <th className="px-6 py-4 font-semibold text-right">Step-up</th>
+                <th className="px-6 py-4 font-semibold text-center">SIP Date</th>
+                <th className="px-6 py-4 font-semibold text-right">Total Invested</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {funds.map(fund => (
+                <tr key={fund.id} className="hover:bg-white/5 transition-colors">
+                  <td className="px-6 py-4 font-medium text-white">{fund.name}</td>
+                  <td className="px-6 py-4 text-right text-emerald-500 font-bold">₹{fund.sipAmount.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right text-blue-400 font-medium">+{fund.stepUp}%</td>
+                  <td className="px-6 py-4 text-center text-gray-400">{fund.sipDate}</td>
+                  <td className="px-6 py-4 text-right text-gray-300">₹{fund.totalInvested.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* AI Step-up Suggestion Section */}
+      <div className="bg-[#141414] p-8 rounded-2xl border border-emerald-500/30 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+          <Zap size={120} className="text-emerald-500" />
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <ArrowUpCircle className="text-emerald-500" />
+                AI Step-up Suggestions
+              </h3>
+              <p className="text-gray-400 text-sm">Get personalized advice on increasing your SIPs for maximum wealth creation.</p>
+            </div>
+            <button 
+              onClick={getAiSuggestion}
+              disabled={isAiLoading}
+              className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center gap-2 disabled:opacity-50"
+            >
+              {isAiLoading ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
+              Generate Suggestions
+            </button>
+          </div>
+
+          {aiSuggestion ? (
+            <div className="bg-white/5 border border-gray-800 p-6 rounded-xl text-gray-300 leading-relaxed whitespace-pre-wrap">
+              {aiSuggestion}
+            </div>
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-gray-800 rounded-xl">
+              <p className="text-gray-500">Click the button above to generate AI-powered SIP step-up suggestions.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
