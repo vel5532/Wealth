@@ -44,12 +44,18 @@ import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppS
 
 // Persistent Settings Helper
 const getStoredSettings = (): AppSettings => {
+  const defaultSettings: AppSettings = { scriptUrl: '', sheetId: '' };
   try {
     const stored = localStorage.getItem('wealthwise_settings');
-    return stored ? JSON.parse(stored) : { scriptUrl: '', sheetId: '' };
+    if (!stored || stored === 'undefined' || stored === 'null') return defaultSettings;
+    const parsed = JSON.parse(stored);
+    return {
+      scriptUrl: typeof parsed?.scriptUrl === 'string' ? parsed.scriptUrl : '',
+      sheetId: typeof parsed?.sheetId === 'string' ? parsed.sheetId : ''
+    };
   } catch (e) {
     console.error('Error parsing stored settings:', e);
-    return { scriptUrl: '', sheetId: '' };
+    return defaultSettings;
   }
 };
 
@@ -146,12 +152,30 @@ function WealthWiseApp() {
   const [data, setData] = useState<FinancialData>(INITIAL_DATA);
   const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
   const [isLoading, setIsLoading] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  // Initialization safety
+  useEffect(() => {
+    try {
+      // Ensure data is valid
+      if (!data || typeof data !== 'object') {
+        setData(INITIAL_DATA);
+      }
+      setIsReady(true);
+    } catch (e) {
+      console.error("Initialization error:", e);
+      setData(INITIAL_DATA);
+      setIsReady(true);
+    }
+  }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('wealthwise_settings', JSON.stringify(settings));
-  }, [settings]);
+    if (isReady) {
+      localStorage.setItem('wealthwise_settings', JSON.stringify(settings));
+    }
+  }, [settings, isReady]);
 
   const updateMetalRate = (id: string, newRate: number) => {
     setData(prev => ({
@@ -164,6 +188,13 @@ function WealthWiseApp() {
     setData(prev => ({
       ...prev,
       stocks: [...(prev.stocks || []), newStock]
+    }));
+  };
+
+  const deleteStock = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      stocks: (prev.stocks || []).filter(s => s.id !== id)
     }));
   };
 
@@ -268,6 +299,17 @@ function WealthWiseApp() {
     { name: 'Silver', value: totals.silverValue },
   ];
 
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="text-emerald-500 w-8 h-8 animate-spin" />
+          <p className="text-gray-400 font-medium">Initializing WealthWise...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-gray-100 font-sans">
       {/* Sidebar / Navigation */}
@@ -341,7 +383,7 @@ function WealthWiseApp() {
         </header>
 
         {activeTab === 'dashboard' && <DashboardView totals={totals} chartData={chartData} data={data} />}
-        {activeTab === 'stocks' && <StocksView stocks={data.stocks} onAddStock={addStock} />}
+        {activeTab === 'stocks' && <StocksView stocks={data.stocks} onAddStock={addStock} onDeleteStock={deleteStock} />}
         {activeTab === 'mf' && <MutualFundsView funds={data.mutualFunds} onAddFund={addFund} />}
         {activeTab === 'gold' && <MetalsView metals={data.metals} onUpdateRate={updateMetalRate} />}
         {activeTab === 'loans' && <LoansView loans={data.loans} onAddLoan={addLoan} />}
@@ -456,7 +498,7 @@ function SummaryCard({ title, value = 0, icon, trend }: { title: string, value: 
   );
 }
 
-function StocksView({ stocks = [], onAddStock }: { stocks: Stock[], onAddStock: (s: Stock) => void }) {
+function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[], onAddStock: (s: Stock) => void, onDeleteStock: (id: string) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStock, setNewStock] = useState<Partial<Stock>>({ marketCap: 'Large' });
 
@@ -617,17 +659,18 @@ function StocksView({ stocks = [], onAddStock }: { stocks: Stock[], onAddStock: 
                 <th className="px-6 py-4 font-semibold">CMP</th>
                 <th className="px-6 py-4 font-semibold">P&L</th>
                 <th className="px-6 py-4 font-semibold">Date</th>
+                <th className="px-6 py-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {stocks.map(stock => {
-                const invested = stock.quantity * stock.avgPrice;
-                const current = stock.quantity * (stock.cmp || stock.avgPrice);
+                const invested = Number(stock.quantity || 0) * Number(stock.avgPrice || 0);
+                const current = Number(stock.quantity || 0) * Number(stock.cmp || stock.avgPrice || 0);
                 const pnl = current - invested;
-                const pnlPct = (pnl / invested) * 100;
+                const pnlPct = invested !== 0 ? (pnl / invested) * 100 : 0;
                 
                 return (
-                  <tr key={stock.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={stock.id} className="hover:bg-white/5 transition-colors group/row">
                     <td className="px-6 py-4">
                       <div className="font-medium text-white">{stock.name}</div>
                       <div className="text-xs text-gray-500">{stock.code}</div>
@@ -643,12 +686,21 @@ function StocksView({ stocks = [], onAddStock }: { stocks: Stock[], onAddStock: 
                       </span>
                     </td>
                     <td className="px-6 py-4 text-gray-300">{stock.quantity}</td>
-                    <td className="px-6 py-4 text-gray-300">₹{stock.avgPrice.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-gray-300">₹{stock.cmp?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-gray-300">₹{Number(stock.avgPrice || 0).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-gray-300">₹{Number(stock.cmp || 0).toLocaleString()}</td>
                     <td className={cn("px-6 py-4 font-medium", pnl >= 0 ? "text-emerald-500" : "text-red-500")}>
                       ₹{pnl.toLocaleString()} ({pnlPct.toFixed(1)}%)
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-sm">{stock.purchaseDate}</td>
+                    <td className="px-6 py-4">
+                      <button 
+                        onClick={() => onDeleteStock(stock.id)}
+                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover/row:opacity-100"
+                        title="Delete Stock"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
