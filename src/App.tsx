@@ -14,6 +14,7 @@ import {
   LineChart,
   Plus,
   Trash2,
+  Edit2,
   RefreshCw,
   ChevronRight,
   TrendingDown,
@@ -184,10 +185,38 @@ function WealthWiseApp() {
     }));
   };
 
+  const addMetal = (newMetal: PreciousMetal) => {
+    setData(prev => ({
+      ...prev,
+      metals: [...(prev.metals || []), newMetal]
+    }));
+  };
+
+  const deleteMetal = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      metals: (prev.metals || []).filter(m => m.id !== id)
+    }));
+  };
+
+  const editMetal = (updatedMetal: PreciousMetal) => {
+    setData(prev => ({
+      ...prev,
+      metals: (prev.metals || []).map(m => m.id === updatedMetal.id ? updatedMetal : m)
+    }));
+  };
+
   const addStock = (newStock: Stock) => {
     setData(prev => ({
       ...prev,
       stocks: [...(prev.stocks || []), newStock]
+    }));
+  };
+
+  const editStock = (updatedStock: Stock) => {
+    setData(prev => ({
+      ...prev,
+      stocks: (prev.stocks || []).map(s => s.id === updatedStock.id ? updatedStock : s)
     }));
   };
 
@@ -205,10 +234,80 @@ function WealthWiseApp() {
     }));
   };
 
+  const editFund = (updatedFund: MutualFund) => {
+    setData(prev => ({
+      ...prev,
+      mutualFunds: (prev.mutualFunds || []).map(f => f.id === updatedFund.id ? updatedFund : f)
+    }));
+  };
+
+  const deleteFund = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      mutualFunds: (prev.mutualFunds || []).filter(f => f.id !== id)
+    }));
+  };
+
   const addLoan = (newLoan: Loan) => {
     setData(prev => ({
       ...prev,
       loans: [...(prev.loans || []), newLoan]
+    }));
+  };
+
+  const editLoan = (updatedLoan: Loan) => {
+    setData(prev => ({
+      ...prev,
+      loans: (prev.loans || []).map(l => l.id === updatedLoan.id ? updatedLoan : l)
+    }));
+  };
+
+  const deleteLoan = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      loans: (prev.loans || []).filter(l => l.id !== id)
+    }));
+  };
+
+  const addIncome = (newIncome: Income) => {
+    setData(prev => ({
+      ...prev,
+      income: [...(prev.income || []), newIncome]
+    }));
+  };
+
+  const editIncome = (updatedIncome: Income) => {
+    setData(prev => ({
+      ...prev,
+      income: (prev.income || []).map(i => i.id === updatedIncome.id ? updatedIncome : i)
+    }));
+  };
+
+  const deleteIncome = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      income: (prev.income || []).filter(i => i.id !== id)
+    }));
+  };
+
+  const addBusiness = (newBusiness: Business) => {
+    setData(prev => ({
+      ...prev,
+      businesses: [...(prev.businesses || []), newBusiness]
+    }));
+  };
+
+  const editBusiness = (updatedBusiness: Business) => {
+    setData(prev => ({
+      ...prev,
+      businesses: (prev.businesses || []).map(b => b.id === updatedBusiness.id ? updatedBusiness : b)
+    }));
+  };
+
+  const deleteBusiness = (id: string) => {
+    setData(prev => ({
+      ...prev,
+      businesses: (prev.businesses || []).filter(b => b.id !== id)
     }));
   };
 
@@ -383,12 +482,59 @@ function WealthWiseApp() {
         </header>
 
         {activeTab === 'dashboard' && <DashboardView totals={totals} chartData={chartData} data={data} />}
-        {activeTab === 'stocks' && <StocksView stocks={data.stocks} onAddStock={addStock} onDeleteStock={deleteStock} />}
-        {activeTab === 'mf' && <MutualFundsView funds={data.mutualFunds} onAddFund={addFund} />}
-        {activeTab === 'gold' && <MetalsView metals={data.metals} onUpdateRate={updateMetalRate} />}
-        {activeTab === 'loans' && <LoansView loans={data.loans} onAddLoan={addLoan} />}
-        {activeTab === 'income' && <IncomeView income={data.income} businesses={data.businesses} />}
-        {activeTab === 'sip-consolidated' && <ConsolidatedSIPView funds={data.mutualFunds} />}
+        {activeTab === 'stocks' && (
+          <StocksView 
+            stocks={data.stocks} 
+            onAddStock={addStock} 
+            onEditStock={editStock} 
+            onDeleteStock={deleteStock} 
+          />
+        )}
+        {activeTab === 'mf' && (
+          <MutualFundsView 
+            funds={data.mutualFunds} 
+            onAddFund={addFund} 
+            onEditFund={editFund} 
+            onDeleteFund={deleteFund} 
+          />
+        )}
+        {activeTab === 'gold' && (
+          <MetalsView 
+            metals={data.metals} 
+            onAddMetal={addMetal} 
+            onEditMetal={editMetal}
+            onDeleteMetal={deleteMetal} 
+            onUpdateRate={updateMetalRate} 
+          />
+        )}
+        {activeTab === 'loans' && (
+          <LoansView 
+            loans={data.loans} 
+            onAddLoan={addLoan} 
+            onEditLoan={editLoan} 
+            onDeleteLoan={deleteLoan} 
+          />
+        )}
+        {activeTab === 'income' && (
+          <IncomeView 
+            income={data.income} 
+            businesses={data.businesses} 
+            onAddIncome={addIncome}
+            onEditIncome={editIncome}
+            onDeleteIncome={deleteIncome}
+            onAddBusiness={addBusiness}
+            onEditBusiness={editBusiness}
+            onDeleteBusiness={deleteBusiness}
+          />
+        )}
+        {activeTab === 'sip-consolidated' && (
+          <ConsolidatedSIPView 
+            funds={data.mutualFunds} 
+            onAddFund={addFund}
+            onEditFund={editFund}
+            onDeleteFund={deleteFund}
+          />
+        )}
         {activeTab === 'projection' && <ProjectionView netWorth={totals.netWorth} funds={data.mutualFunds} otherSavings={totals.totalIncome * 0.4 - totals.totalSIP} />}
         {activeTab === 'settings' && <SettingsView settings={settings} onSave={setSettings} />}
       </main>
@@ -498,8 +644,9 @@ function SummaryCard({ title, value = 0, icon, trend }: { title: string, value: 
   );
 }
 
-function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[], onAddStock: (s: Stock) => void, onDeleteStock: (id: string) => void }) {
+function StocksView({ stocks = [], onAddStock, onEditStock, onDeleteStock }: { stocks: Stock[], onAddStock: (s: Stock) => void, onEditStock: (s: Stock) => void, onDeleteStock: (id: string) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
   const [newStock, setNewStock] = useState<Partial<Stock>>({ marketCap: 'Large' });
 
   const safeStocks = Array.isArray(stocks) ? stocks : [];
@@ -525,19 +672,36 @@ function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newStock.name && newStock.code && newStock.quantity && newStock.avgPrice && newStock.purchaseDate) {
-      onAddStock({
-        id: Math.random().toString(36).substr(2, 9),
-        name: newStock.name,
-        code: newStock.code,
-        quantity: Number(newStock.quantity),
-        avgPrice: Number(newStock.avgPrice),
-        purchaseDate: newStock.purchaseDate,
-        marketCap: newStock.marketCap as any,
-        cmp: Number(newStock.avgPrice) // Initial CMP same as Avg Price
-      });
+      if (editingStockId) {
+        onEditStock({
+          ...newStock as Stock,
+          id: editingStockId,
+          quantity: Number(newStock.quantity),
+          avgPrice: Number(newStock.avgPrice),
+          cmp: Number(newStock.cmp || newStock.avgPrice)
+        });
+        setEditingStockId(null);
+      } else {
+        onAddStock({
+          id: Math.random().toString(36).substr(2, 9),
+          name: newStock.name,
+          code: newStock.code,
+          quantity: Number(newStock.quantity),
+          avgPrice: Number(newStock.avgPrice),
+          purchaseDate: newStock.purchaseDate,
+          marketCap: newStock.marketCap as any,
+          cmp: Number(newStock.avgPrice) // Initial CMP same as Avg Price
+        });
+      }
       setShowAddForm(false);
       setNewStock({ marketCap: 'Large' });
     }
+  };
+
+  const handleEdit = (stock: Stock) => {
+    setNewStock(stock);
+    setEditingStockId(stock.id);
+    setShowAddForm(true);
   };
 
   return (
@@ -642,7 +806,9 @@ function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[
           </select>
           <div className="md:col-span-3 flex justify-end gap-3">
             <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">Save Stock</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">
+              {editingStockId ? 'Update Stock' : 'Save Stock'}
+            </button>
           </div>
         </form>
       )}
@@ -693,13 +859,22 @@ function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[
                     </td>
                     <td className="px-6 py-4 text-gray-500 text-sm">{stock.purchaseDate}</td>
                     <td className="px-6 py-4">
-                      <button 
-                        onClick={() => onDeleteStock(stock.id)}
-                        className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover/row:opacity-100"
-                        title="Delete Stock"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleEdit(stock)}
+                          className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all opacity-0 group-hover/row:opacity-100"
+                          title="Edit Stock"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={() => onDeleteStock(stock.id)}
+                          className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover/row:opacity-100"
+                          title="Delete Stock"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -712,25 +887,44 @@ function StocksView({ stocks = [], onAddStock, onDeleteStock }: { stocks: Stock[
   );
 }
 
-function MutualFundsView({ funds = [], onAddFund }: { funds: MutualFund[], onAddFund: (f: MutualFund) => void }) {
+function MutualFundsView({ funds = [], onAddFund, onEditFund, onDeleteFund }: { funds: MutualFund[], onAddFund: (f: MutualFund) => void, onEditFund: (f: MutualFund) => void, onDeleteFund: (id: string) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingFundId, setEditingFundId] = useState<string | null>(null);
   const [newFund, setNewFund] = useState<Partial<MutualFund>>({ sipDate: '15th', stepUp: 10 });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newFund.name && newFund.sipAmount && newFund.totalInvested) {
-      onAddFund({
-        id: Math.random().toString(36).substr(2, 9),
-        name: newFund.name,
-        sipAmount: Number(newFund.sipAmount),
-        totalInvested: Number(newFund.totalInvested),
-        nav: Number(newFund.nav || 0),
-        sipDate: newFund.sipDate || '15th',
-        stepUp: Number(newFund.stepUp || 0)
-      });
+      if (editingFundId) {
+        onEditFund({
+          ...newFund as MutualFund,
+          id: editingFundId,
+          sipAmount: Number(newFund.sipAmount),
+          totalInvested: Number(newFund.totalInvested),
+          nav: Number(newFund.nav || 0),
+          stepUp: Number(newFund.stepUp || 0)
+        });
+        setEditingFundId(null);
+      } else {
+        onAddFund({
+          id: Math.random().toString(36).substr(2, 9),
+          name: newFund.name,
+          sipAmount: Number(newFund.sipAmount),
+          totalInvested: Number(newFund.totalInvested),
+          nav: Number(newFund.nav || 0),
+          sipDate: newFund.sipDate || '15th',
+          stepUp: Number(newFund.stepUp || 0)
+        });
+      }
       setShowAddForm(false);
       setNewFund({ sipDate: '15th', stepUp: 10 });
     }
+  };
+
+  const handleEdit = (fund: MutualFund) => {
+    setNewFund(fund);
+    setEditingFundId(fund.id);
+    setShowAddForm(true);
   };
 
   const FUND_OPTIONS = [
@@ -847,15 +1041,33 @@ function MutualFundsView({ funds = [], onAddFund }: { funds: MutualFund[], onAdd
           </div>
 
           <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
-            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">Save Fund</button>
+            <button type="button" onClick={() => { setShowAddForm(false); setEditingFundId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">
+              {editingFundId ? 'Update Fund' : 'Save Fund'}
+            </button>
           </div>
         </form>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {(funds || []).map(fund => (
-          <div key={fund.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 relative overflow-hidden group">
+          <div key={fund.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+            <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <button 
+                onClick={() => handleEdit(fund)}
+                className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+                title="Edit Fund"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={() => onDeleteFund(fund.id)}
+                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Delete Fund"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <PieChartIcon size={80} />
             </div>
@@ -911,13 +1123,119 @@ function MutualFundsView({ funds = [], onAddFund }: { funds: MutualFund[], onAdd
   );
 }
 
-function MetalsView({ metals = [], onUpdateRate }: { metals: PreciousMetal[], onUpdateRate: (id: string, rate: number) => void }) {
+function MetalsView({ metals = [], onAddMetal, onEditMetal, onDeleteMetal, onUpdateRate }: { metals: PreciousMetal[], onAddMetal: (m: PreciousMetal) => void, onEditMetal: (m: PreciousMetal) => void, onDeleteMetal: (id: string) => void, onUpdateRate: (id: string, rate: number) => void }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingMetalId, setEditingMetalId] = useState<string | null>(null);
+  const [newMetal, setNewMetal] = useState<Partial<PreciousMetal>>({ type: 'Gold' });
+
   const safeMetals = Array.isArray(metals) ? metals : [];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newMetal.type && newMetal.rate && newMetal.holding) {
+      if (editingMetalId) {
+        onEditMetal({
+          ...newMetal as PreciousMetal,
+          id: editingMetalId,
+          rate: Number(newMetal.rate),
+          holding: Number(newMetal.holding)
+        });
+        setEditingMetalId(null);
+      } else {
+        onAddMetal({
+          id: Math.random().toString(36).substr(2, 9),
+          type: newMetal.type as any,
+          rate: Number(newMetal.rate),
+          holding: Number(newMetal.holding)
+        });
+      }
+      setShowAddForm(false);
+      setNewMetal({ type: 'Gold' });
+    }
+  };
+
+  const handleEdit = (metal: PreciousMetal) => {
+    setNewMetal(metal);
+    setEditingMetalId(metal.id);
+    setShowAddForm(true);
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Precious Metals</h3>
+        <button 
+          onClick={() => { setShowAddForm(!showAddForm); setEditingMetalId(null); setNewMetal({ type: 'Gold' }); }}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
+        >
+          <Plus size={18} />
+          {showAddForm ? 'Cancel' : 'Add Metal'}
+        </button>
+      </div>
+
+      {showAddForm && (
+        <form onSubmit={handleSubmit} className="bg-[#141414] p-6 rounded-2xl border border-emerald-500/30 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Metal Type</label>
+            <select 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newMetal.type}
+              onChange={e => setNewMetal({...newMetal, type: e.target.value as any})}
+            >
+              <option value="Gold">Gold</option>
+              <option value="Silver">Silver</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Current Rate</label>
+            <input 
+              type="number" 
+              placeholder="Current Rate" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newMetal.rate || ''}
+              onChange={e => setNewMetal({...newMetal, rate: Number(e.target.value)})}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Holding Amount</label>
+            <input 
+              type="number" 
+              placeholder="Holding Amount" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newMetal.holding || ''}
+              onChange={e => setNewMetal({...newMetal, holding: Number(e.target.value)})}
+              required
+            />
+          </div>
+          <div className="md:col-span-3 flex justify-end gap-3">
+            <button type="button" onClick={() => { setShowAddForm(false); setEditingMetalId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">
+              {editingMetalId ? 'Update Metal' : 'Save Metal'}
+            </button>
+          </div>
+        </form>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {safeMetals.map(metal => (
-          <div key={metal.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
+          <div key={metal.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 relative group hover:border-emerald-500/30 transition-all">
+            <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+              <button 
+                onClick={() => handleEdit(metal)}
+                className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+                title="Edit Metal"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={() => onDeleteMetal(metal.id)}
+                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                title="Delete Metal"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <div className={cn(
@@ -961,16 +1279,137 @@ function MetalsView({ metals = [], onUpdateRate }: { metals: PreciousMetal[], on
   );
 }
 
-function IncomeView({ income = [], businesses = [] }: { income: Income[], businesses: Business[] }) {
+function IncomeView({ 
+  income = [], 
+  businesses = [], 
+  onAddIncome, 
+  onEditIncome, 
+  onDeleteIncome, 
+  onAddBusiness, 
+  onEditBusiness, 
+  onDeleteBusiness 
+}: { 
+  income: Income[], 
+  businesses: Business[],
+  onAddIncome: (i: Income) => void,
+  onEditIncome: (i: Income) => void,
+  onDeleteIncome: (id: string) => void,
+  onAddBusiness: (b: Business) => void,
+  onEditBusiness: (b: Business) => void,
+  onDeleteBusiness: (id: string) => void
+}) {
+  const [showIncomeForm, setShowIncomeForm] = useState(false);
+  const [editingIncomeId, setEditingIncomeId] = useState<string | null>(null);
+  const [newIncome, setNewIncome] = useState<Partial<Income>>({});
+
+  const [showBusinessForm, setShowBusinessForm] = useState(false);
+  const [editingBusinessId, setEditingBusinessId] = useState<string | null>(null);
+  const [newBusiness, setNewBusiness] = useState<Partial<Business>>({});
+
   const safeIncome = Array.isArray(income) ? income : [];
   const safeBusinesses = Array.isArray(businesses) ? businesses : [];
+
+  const handleIncomeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newIncome.category && newIncome.amount) {
+      if (editingIncomeId) {
+        onEditIncome({ ...newIncome as Income, id: editingIncomeId, amount: Number(newIncome.amount) });
+        setEditingIncomeId(null);
+      } else {
+        onAddIncome({
+          id: Math.random().toString(36).substr(2, 9),
+          category: newIncome.category,
+          amount: Number(newIncome.amount)
+        });
+      }
+      setShowIncomeForm(false);
+      setNewIncome({});
+    }
+  };
+
+  const handleBusinessSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newBusiness.name && newBusiness.investment && newBusiness.profit && newBusiness.target) {
+      if (editingBusinessId) {
+        onEditBusiness({
+          ...newBusiness as Business,
+          id: editingBusinessId,
+          investment: Number(newBusiness.investment),
+          profit: Number(newBusiness.profit),
+          target: Number(newBusiness.target)
+        });
+        setEditingBusinessId(null);
+      } else {
+        onAddBusiness({
+          id: Math.random().toString(36).substr(2, 9),
+          name: newBusiness.name,
+          investment: Number(newBusiness.investment),
+          profit: Number(newBusiness.profit),
+          target: Number(newBusiness.target)
+        });
+      }
+      setShowBusinessForm(false);
+      setNewBusiness({});
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
-        <h3 className="text-lg font-semibold mb-6">Monthly Income Streams</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Monthly Income Streams</h3>
+          <button 
+            onClick={() => { setShowIncomeForm(!showIncomeForm); setEditingIncomeId(null); setNewIncome({}); }}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm"
+          >
+            <Plus size={16} />
+            Add Income
+          </button>
+        </div>
+
+        {showIncomeForm && (
+          <form onSubmit={handleIncomeSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900/50 p-4 rounded-xl border border-emerald-500/20">
+            <input 
+              placeholder="Category (e.g. Salary)" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newIncome.category || ''}
+              onChange={e => setNewIncome({...newIncome, category: e.target.value})}
+              required
+            />
+            <input 
+              type="number" 
+              placeholder="Monthly Amount" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newIncome.amount || ''}
+              onChange={e => setNewIncome({...newIncome, amount: Number(e.target.value)})}
+              required
+            />
+            <div className="flex gap-2">
+              <button type="submit" className="flex-1 bg-emerald-500 text-white rounded-lg font-bold py-2">
+                {editingIncomeId ? 'Update' : 'Save'}
+              </button>
+              <button type="button" onClick={() => { setShowIncomeForm(false); setEditingIncomeId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            </div>
+          </form>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {safeIncome.map(item => (
-            <div key={item.id} className="bg-white/5 p-4 rounded-xl border border-gray-800">
+            <div key={item.id} className="bg-white/5 p-4 rounded-xl border border-gray-800 group relative hover:border-emerald-500/30 transition-all">
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => { setNewIncome(item); setEditingIncomeId(item.id); setShowIncomeForm(true); }}
+                  className="p-1.5 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg"
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button 
+                  onClick={() => onDeleteIncome(item.id)}
+                  className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <p className="text-gray-400 text-sm mb-1">{item.category}</p>
               <h4 className="text-xl font-bold text-white">₹{(Number(item.amount) || 0).toLocaleString()}</h4>
               <div className="mt-2 w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
@@ -982,13 +1421,79 @@ function IncomeView({ income = [], businesses = [] }: { income: Income[], busine
       </div>
 
       <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
-        <h3 className="text-lg font-semibold mb-6">Business Performance</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold">Business Performance</h3>
+          <button 
+            onClick={() => { setShowBusinessForm(!showBusinessForm); setEditingBusinessId(null); setNewBusiness({}); }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+          >
+            <Plus size={16} />
+            Add Business
+          </button>
+        </div>
+
+        {showBusinessForm && (
+          <form onSubmit={handleBusinessSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-900/50 p-4 rounded-xl border border-blue-500/20">
+            <input 
+              placeholder="Business Name" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newBusiness.name || ''}
+              onChange={e => setNewBusiness({...newBusiness, name: e.target.value})}
+              required
+            />
+            <input 
+              type="number" 
+              placeholder="Investment" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newBusiness.investment || ''}
+              onChange={e => setNewBusiness({...newBusiness, investment: Number(e.target.value)})}
+              required
+            />
+            <input 
+              type="number" 
+              placeholder="Monthly Profit" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newBusiness.profit || ''}
+              onChange={e => setNewBusiness({...newBusiness, profit: Number(e.target.value)})}
+              required
+            />
+            <input 
+              type="number" 
+              placeholder="Target Profit" 
+              className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newBusiness.target || ''}
+              onChange={e => setNewBusiness({...newBusiness, target: Number(e.target.value)})}
+              required
+            />
+            <div className="lg:col-span-4 flex justify-end gap-3">
+              <button type="button" onClick={() => { setShowBusinessForm(false); setEditingBusinessId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+              <button type="submit" className="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold">
+                {editingBusinessId ? 'Update Business' : 'Save Business'}
+              </button>
+            </div>
+          </form>
+        )}
+
         <div className="space-y-6">
           {safeBusinesses.map(biz => {
             const progress = (Number(biz.profit || 0) / Number(biz.target || 1)) * 100;
             const safeProgress = isFinite(progress) ? progress : 0;
             return (
-              <div key={biz.id} className="space-y-3">
+              <div key={biz.id} className="space-y-3 group relative p-4 rounded-xl hover:bg-white/5 transition-all">
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => { setNewBusiness(biz); setEditingBusinessId(biz.id); setShowBusinessForm(true); }}
+                    className="p-1.5 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg"
+                  >
+                    <Edit2 size={14} />
+                  </button>
+                  <button 
+                    onClick={() => onDeleteBusiness(biz.id)}
+                    className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
                 <div className="flex justify-between items-end">
                   <div>
                     <h4 className="font-bold text-white">{biz.name}</h4>
@@ -1152,8 +1657,9 @@ function ProjectionView({ netWorth = 0, funds = [], otherSavings = 0 }: { netWor
   );
 }
 
-function LoansView({ loans = [], onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) => void }) {
+function LoansView({ loans = [], onAddLoan, onEditLoan, onDeleteLoan }: { loans: Loan[], onAddLoan: (l: Loan) => void, onEditLoan: (l: Loan) => void, onDeleteLoan: (id: string) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingLoanId, setEditingLoanId] = useState<string | null>(null);
   const [newLoan, setNewLoan] = useState<Partial<Loan>>({});
 
   const safeLoans = Array.isArray(loans) ? loans : [];
@@ -1161,19 +1667,38 @@ function LoansView({ loans = [], onAddLoan }: { loans: Loan[], onAddLoan: (l: Lo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newLoan.name && newLoan.totalAmount && newLoan.remainingAmount && newLoan.emi) {
-      onAddLoan({
-        id: Math.random().toString(36).substr(2, 9),
-        name: newLoan.name,
-        totalAmount: Number(newLoan.totalAmount),
-        remainingAmount: Number(newLoan.remainingAmount),
-        emi: Number(newLoan.emi),
-        interestRate: Number(newLoan.interestRate || 0),
-        tenureMonths: Number(newLoan.tenureMonths || 0),
-        startDate: newLoan.startDate || new Date().toISOString().split('T')[0]
-      });
+      if (editingLoanId) {
+        onEditLoan({
+          ...newLoan as Loan,
+          id: editingLoanId,
+          totalAmount: Number(newLoan.totalAmount),
+          remainingAmount: Number(newLoan.remainingAmount),
+          emi: Number(newLoan.emi),
+          interestRate: Number(newLoan.interestRate || 0),
+          tenureMonths: Number(newLoan.tenureMonths || 0)
+        });
+        setEditingLoanId(null);
+      } else {
+        onAddLoan({
+          id: Math.random().toString(36).substr(2, 9),
+          name: newLoan.name,
+          totalAmount: Number(newLoan.totalAmount),
+          remainingAmount: Number(newLoan.remainingAmount),
+          emi: Number(newLoan.emi),
+          interestRate: Number(newLoan.interestRate || 0),
+          tenureMonths: Number(newLoan.tenureMonths || 0),
+          startDate: newLoan.startDate || new Date().toISOString().split('T')[0]
+        });
+      }
       setShowAddForm(false);
       setNewLoan({});
     }
+  };
+
+  const handleEdit = (loan: Loan) => {
+    setNewLoan(loan);
+    setEditingLoanId(loan.id);
+    setShowAddForm(true);
   };
 
   const totalLiability = safeLoans.reduce((acc, l) => acc + Number(l.remainingAmount || 0), 0);
@@ -1269,8 +1794,10 @@ function LoansView({ loans = [], onAddLoan }: { loans: Loan[], onAddLoan: (l: Lo
             />
           </div>
           <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
-            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-            <button type="submit" className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold">Save Loan</button>
+            <button type="button" onClick={() => { setShowAddForm(false); setEditingLoanId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold">
+              {editingLoanId ? 'Update Loan' : 'Save Loan'}
+            </button>
           </div>
         </form>
       )}
@@ -1280,7 +1807,23 @@ function LoansView({ loans = [], onAddLoan }: { loans: Loan[], onAddLoan: (l: Lo
           const progress = ((Number(loan.totalAmount || 0) - Number(loan.remainingAmount || 0)) / Number(loan.totalAmount || 1)) * 100;
           const safeProgress = isFinite(progress) ? progress : 0;
           return (
-            <div key={loan.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 group">
+            <div key={loan.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 group relative hover:border-red-500/30 transition-all">
+              <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <button 
+                  onClick={() => handleEdit(loan)}
+                  className="p-2 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+                  title="Edit Loan"
+                >
+                  <Edit2 size={16} />
+                </button>
+                <button 
+                  onClick={() => onDeleteLoan(loan.id)}
+                  className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                  title="Delete Loan"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
               <div className="flex justify-between items-start mb-4">
                 <h4 className="text-lg font-bold text-white">{loan.name}</h4>
                 <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-full">
@@ -1387,15 +1930,76 @@ function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s:
   );
 }
 
-function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
+function ConsolidatedSIPView({ 
+  funds = [], 
+  onAddFund, 
+  onEditFund, 
+  onDeleteFund 
+}: { 
+  funds: MutualFund[], 
+  onAddFund: (f: MutualFund) => void,
+  onEditFund: (f: MutualFund) => void,
+  onDeleteFund: (id: string) => void
+}) {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [financialGoals, setFinancialGoals] = useState("Retire with 10Cr in 20 years, Buy a house in 5 years");
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingFundId, setEditingFundId] = useState<string | null>(null);
+  const [newFund, setNewFund] = useState<Partial<MutualFund>>({ sipDate: '15th', stepUp: 10 });
 
   const safeFunds = Array.isArray(funds) ? funds : [];
 
   const totalMonthlySIP = safeFunds.reduce((acc, f) => acc + Number(f.sipAmount || 0), 0);
   const totalInvested = safeFunds.reduce((acc, f) => acc + Number(f.totalInvested || 0), 0);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newFund.name && newFund.sipAmount && newFund.totalInvested) {
+      if (editingFundId) {
+        onEditFund({
+          ...newFund as MutualFund,
+          id: editingFundId,
+          sipAmount: Number(newFund.sipAmount),
+          totalInvested: Number(newFund.totalInvested),
+          nav: Number(newFund.nav || 0),
+          stepUp: Number(newFund.stepUp || 0)
+        });
+        setEditingFundId(null);
+      } else {
+        onAddFund({
+          id: Math.random().toString(36).substr(2, 9),
+          name: newFund.name,
+          sipAmount: Number(newFund.sipAmount),
+          totalInvested: Number(newFund.totalInvested),
+          sipDate: newFund.sipDate || '15th',
+          nav: Number(newFund.nav || 0),
+          stepUp: Number(newFund.stepUp || 0)
+        });
+      }
+      setShowAddForm(false);
+      setNewFund({ sipDate: '15th', stepUp: 10 });
+    }
+  };
+
+  const handleEdit = (fund: MutualFund) => {
+    setNewFund(fund);
+    setEditingFundId(fund.id);
+    setShowAddForm(true);
+  };
+
+  const FUND_OPTIONS = [
+    "Parag Parikh Flexi Cap Fund",
+    "Mirae Asset Large Cap Fund",
+    "Quant Small Cap Fund",
+    "HDFC Index S&P BSE Sensex Fund",
+    "ICICI Prudential Bluechip Fund",
+    "Axis Bluechip Fund",
+    "SBI Bluechip Fund",
+    "Nippon India Large Cap Fund",
+    "Kotak Bluechip Fund",
+    "UTI Mastershare Unit Scheme"
+  ];
 
   const getAiSuggestion = async () => {
     setIsAiLoading(true);
@@ -1439,9 +2043,117 @@ function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
 
       <div className="bg-[#141414] rounded-2xl border border-gray-800 overflow-hidden">
         <div className="p-6 border-b border-gray-800 flex justify-between items-center">
-          <h3 className="text-lg font-semibold">SIP Consolidation Table</h3>
-          <span className="text-xs text-gray-500 font-bold uppercase">{safeFunds.length} Active SIPs</span>
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-semibold">SIP Consolidation Table</h3>
+            <span className="text-xs text-gray-500 font-bold uppercase">{safeFunds.length} Active SIPs</span>
+          </div>
+          <button 
+            onClick={() => { setShowAddForm(!showAddForm); setEditingFundId(null); setNewFund({ sipDate: '15th', stepUp: 10 }); }}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm"
+          >
+            <Plus size={16} />
+            {showAddForm ? 'Cancel' : 'Add SIP'}
+          </button>
         </div>
+
+        {showAddForm && (
+          <div className="p-6 border-b border-gray-800 bg-gray-900/50">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">Fund Name</label>
+                <select 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.name || ''}
+                  onChange={e => setNewFund({...newFund, name: e.target.value})}
+                  required
+                >
+                  <option value="">Select a Fund</option>
+                  {FUND_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  <option value="Other">Other (Manual Entry)</option>
+                </select>
+              </div>
+
+              {newFund.name === 'Other' && (
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500 font-bold uppercase">Custom Fund Name</label>
+                  <input 
+                    placeholder="Enter Fund Name" 
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                    onChange={e => setNewFund({...newFund, name: e.target.value})}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">Monthly SIP Amount</label>
+                <input 
+                  type="number" 
+                  placeholder="SIP Amount" 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.sipAmount || ''}
+                  onChange={e => setNewFund({...newFund, sipAmount: Number(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">Total Invested Value</label>
+                <input 
+                  type="number" 
+                  placeholder="Total Invested" 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.totalInvested || ''}
+                  onChange={e => setNewFund({...newFund, totalInvested: Number(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">Current NAV (Optional)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="NAV" 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.nav || ''}
+                  onChange={e => setNewFund({...newFund, nav: Number(e.target.value)})}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">SIP Date</label>
+                <input 
+                  placeholder="e.g. 15th" 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.sipDate || ''}
+                  onChange={e => setNewFund({...newFund, sipDate: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500 font-bold uppercase">Step-up %</label>
+                <input 
+                  type="number" 
+                  placeholder="Step-up %" 
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+                  value={newFund.stepUp || ''}
+                  onChange={e => setNewFund({...newFund, stepUp: Number(e.target.value)})}
+                  required
+                />
+              </div>
+
+              <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
+                <button type="button" onClick={() => { setShowAddForm(false); setEditingFundId(null); }} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button type="submit" className="px-6 py-2 bg-emerald-500 text-white rounded-lg font-bold">
+                  {editingFundId ? 'Update SIP' : 'Save SIP'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -1451,16 +2163,35 @@ function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
                 <th className="px-6 py-4 font-semibold text-right">Step-up</th>
                 <th className="px-6 py-4 font-semibold text-center">SIP Date</th>
                 <th className="px-6 py-4 font-semibold text-right">Total Invested</th>
+                <th className="px-6 py-4 font-semibold text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
               {safeFunds.map(fund => (
-                <tr key={fund.id} className="hover:bg-white/5 transition-colors">
+                <tr key={fund.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4 font-medium text-white">{fund.name}</td>
                   <td className="px-6 py-4 text-right text-emerald-500 font-bold">₹{(Number(fund.sipAmount) || 0).toLocaleString()}</td>
                   <td className="px-6 py-4 text-right text-blue-400 font-medium">+{fund.stepUp}%</td>
                   <td className="px-6 py-4 text-center text-gray-400">{fund.sipDate}</td>
                   <td className="px-6 py-4 text-right text-gray-300">₹{(Number(fund.totalInvested) || 0).toLocaleString()}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => handleEdit(fund)}
+                        className="p-1.5 text-gray-500 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+                        title="Edit SIP"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={() => onDeleteFund(fund.id)}
+                        className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Delete SIP"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
