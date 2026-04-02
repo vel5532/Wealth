@@ -197,7 +197,12 @@ function WealthWiseApp() {
         const response = await fetch(`${settings.scriptUrl}?action=getData&sheetId=${settings.sheetId}`);
         const result = await response.json();
         if (result.status === 'success' && result.data) {
-          setData(result.data);
+          // Merge with INITIAL_DATA to ensure all keys exist
+          setData(prev => ({
+            ...INITIAL_DATA,
+            ...result.data,
+            // Deep merge arrays if necessary, but here we assume result.data is a full replacement
+          }));
         }
       } catch (error) {
         console.error('Error fetching data from Google Sheets:', error);
@@ -206,9 +211,9 @@ function WealthWiseApp() {
       // Fallback to simulation if no script URL is provided
       setData(prev => ({
         ...prev,
-        stocks: (prev.stocks || []).map(s => ({
+        stocks: (prev?.stocks || INITIAL_DATA.stocks).map(s => ({
           ...s,
-          cmp: s.cmp ? s.cmp * (1 + (Math.random() * 0.02 - 0.01)) : s.avgPrice
+          cmp: (s.cmp || s.avgPrice) * (1 + (Math.random() * 0.02 - 0.01))
         }))
       }));
     }
@@ -218,42 +223,41 @@ function WealthWiseApp() {
   };
 
   const totals = useMemo(() => {
-    const stocks = data?.stocks || [];
-    const mutualFunds = data?.mutualFunds || [];
-    const metals = data?.metals || [];
-    const income = data?.income || [];
-    const loans = data?.loans || [];
+    const stocks = data?.stocks ?? INITIAL_DATA.stocks;
+    const mutualFunds = data?.mutualFunds ?? INITIAL_DATA.mutualFunds;
+    const metals = data?.metals ?? INITIAL_DATA.metals;
+    const income = data?.income ?? INITIAL_DATA.income;
+    const loans = data?.loans ?? INITIAL_DATA.loans;
 
-    const equityInvested = stocks.reduce((acc, s) => acc + (s.quantity * s.avgPrice), 0);
-    const equityCurrent = stocks.reduce((acc, s) => acc + (s.quantity * (s.cmp || s.avgPrice)), 0);
+    const equityInvested = stocks.reduce((acc, s) => acc + (Number(s.quantity || 0) * Number(s.avgPrice || 0)), 0);
+    const equityCurrent = stocks.reduce((acc, s) => acc + (Number(s.quantity || 0) * Number(s.cmp || s.avgPrice || 0)), 0);
     
-    const mfInvested = mutualFunds.reduce((acc, mf) => acc + mf.totalInvested, 0);
-    // Simple current value calculation for MF (mock)
+    const mfInvested = mutualFunds.reduce((acc, mf) => acc + Number(mf.totalInvested || 0), 0);
     const mfCurrent = mfInvested * 1.15; 
 
-    const goldValue = metals.filter(m => m.type === 'Gold').reduce((acc, m) => acc + (m.rate * m.holding), 0);
-    const silverValue = metals.filter(m => m.type === 'Silver').reduce((acc, m) => acc + (m.rate * m.holding), 0);
+    const goldValue = metals.filter(m => m.type === 'Gold').reduce((acc, m) => acc + (Number(m.rate || 0) * Number(m.holding || 0)), 0);
+    const silverValue = metals.filter(m => m.type === 'Silver').reduce((acc, m) => acc + (Number(m.rate || 0) * Number(m.holding || 0)), 0);
     
-    const totalIncome = income.reduce((acc, i) => acc + i.amount, 0);
-    const totalSIP = mutualFunds.reduce((acc, mf) => acc + mf.sipAmount, 0);
+    const totalIncome = income.reduce((acc, i) => acc + Number(i.amount || 0), 0);
+    const totalSIP = mutualFunds.reduce((acc, mf) => acc + Number(mf.sipAmount || 0), 0);
     
-    const totalLoanLiability = loans.reduce((acc, l) => acc + l.remainingAmount, 0);
-    const totalLoanEMI = loans.reduce((acc, l) => acc + l.emi, 0);
+    const totalLoanLiability = loans.reduce((acc, l) => acc + Number(l.remainingAmount || 0), 0);
+    const totalLoanEMI = loans.reduce((acc, l) => acc + Number(l.emi || 0), 0);
 
     const netWorth = (equityCurrent + mfCurrent + goldValue + silverValue) - totalLoanLiability;
 
     return {
-      equityInvested,
-      equityCurrent,
-      mfInvested,
-      mfCurrent,
-      goldValue,
-      silverValue,
-      totalIncome,
-      totalSIP,
-      totalLoanLiability,
-      totalLoanEMI,
-      netWorth
+      equityInvested: isFinite(equityInvested) ? equityInvested : 0,
+      equityCurrent: isFinite(equityCurrent) ? equityCurrent : 0,
+      mfInvested: isFinite(mfInvested) ? mfInvested : 0,
+      mfCurrent: isFinite(mfCurrent) ? mfCurrent : 0,
+      goldValue: isFinite(goldValue) ? goldValue : 0,
+      silverValue: isFinite(silverValue) ? silverValue : 0,
+      totalIncome: isFinite(totalIncome) ? totalIncome : 0,
+      totalSIP: isFinite(totalSIP) ? totalSIP : 0,
+      totalLoanLiability: isFinite(totalLoanLiability) ? totalLoanLiability : 0,
+      totalLoanEMI: isFinite(totalLoanEMI) ? totalLoanEMI : 0,
+      netWorth: isFinite(netWorth) ? netWorth : 0
     };
   }, [data]);
 
@@ -365,7 +369,8 @@ function NavItem({ active, onClick, icon, label }: { active: boolean, onClick: (
   );
 }
 
-function DashboardView({ totals, chartData, data }: { totals: any, chartData: any[], data: FinancialData }) {
+function DashboardView({ totals, chartData = [], data }: { totals: any, chartData: any[], data: FinancialData }) {
+  const safeIncome = data?.income ?? [];
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -398,7 +403,7 @@ function DashboardView({ totals, chartData, data }: { totals: any, chartData: an
                 </Pie>
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                  formatter={(value: number) => `₹${value.toLocaleString()}`}
+                  formatter={(value: number) => `₹${(Number(value) || 0).toLocaleString()}`}
                 />
                 <Legend verticalAlign="bottom" height={36}/>
               </PieChart>
@@ -410,18 +415,18 @@ function DashboardView({ totals, chartData, data }: { totals: any, chartData: an
         <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
           <h3 className="text-lg font-semibold mb-6">Income Distribution</h3>
           <div className="space-y-4">
-            {data.income.map((item, idx) => (
+            {safeIncome.map((item, idx) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
                   <span className="text-gray-400">{item.category}</span>
                 </div>
-                <span className="font-medium">₹{item.amount.toLocaleString()}</span>
+                <span className="font-medium">₹{(Number(item.amount) || 0).toLocaleString()}</span>
               </div>
             ))}
             <div className="pt-4 border-t border-gray-800 flex justify-between font-bold text-white">
               <span>Total</span>
-              <span>₹{totals.totalIncome.toLocaleString()}</span>
+              <span>₹{(Number(totals.totalIncome) || 0).toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -430,8 +435,9 @@ function DashboardView({ totals, chartData, data }: { totals: any, chartData: an
   );
 }
 
-function SummaryCard({ title, value, icon, trend }: { title: string, value: number, icon: React.ReactNode, trend?: string }) {
+function SummaryCard({ title, value = 0, icon, trend }: { title: string, value: number, icon: React.ReactNode, trend?: string }) {
   const isNegative = title.toLowerCase().includes('loan') || title.toLowerCase().includes('liability');
+  const safeValue = Number(value) || 0;
   return (
     <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800 hover:border-emerald-500/30 transition-all group">
       <div className="flex justify-between items-start mb-4">
@@ -445,32 +451,34 @@ function SummaryCard({ title, value, icon, trend }: { title: string, value: numb
         )}
       </div>
       <p className="text-gray-400 text-sm mb-1">{title}</p>
-      <h4 className={cn("text-2xl font-bold", isNegative ? "text-red-400" : "text-white")}>₹{value.toLocaleString()}</h4>
+      <h4 className={cn("text-2xl font-bold", isNegative ? "text-red-400" : "text-white")}>₹{safeValue.toLocaleString()}</h4>
     </div>
   );
 }
 
-function StocksView({ stocks, onAddStock }: { stocks: Stock[], onAddStock: (s: Stock) => void }) {
+function StocksView({ stocks = [], onAddStock }: { stocks: Stock[], onAddStock: (s: Stock) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newStock, setNewStock] = useState<Partial<Stock>>({ marketCap: 'Large' });
 
-  const totals = stocks.reduce((acc, s) => {
-    const invested = s.quantity * s.avgPrice;
-    const current = s.quantity * (s.cmp || s.avgPrice);
+  const safeStocks = Array.isArray(stocks) ? stocks : [];
+
+  const totals = safeStocks.reduce((acc, s) => {
+    const invested = Number(s.quantity || 0) * Number(s.avgPrice || 0);
+    const current = Number(s.quantity || 0) * Number(s.cmp || s.avgPrice || 0);
     return {
       invested: acc.invested + invested,
       current: acc.current + current,
     };
   }, { invested: 0, current: 0 });
 
-  const capWise = stocks.reduce((acc, s) => {
-    const current = s.quantity * (s.cmp || s.avgPrice);
+  const capWise = safeStocks.reduce((acc, s) => {
+    const current = Number(s.quantity || 0) * Number(s.cmp || s.avgPrice || 0);
     acc[s.marketCap] = (acc[s.marketCap] || 0) + current;
     return acc;
   }, {} as Record<string, number>);
 
   const profit = totals.current - totals.invested;
-  const profitPct = (profit / totals.invested) * 100;
+  const profitPct = totals.invested !== 0 ? (profit / totals.invested) * 100 : 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -851,11 +859,12 @@ function MutualFundsView({ funds = [], onAddFund }: { funds: MutualFund[], onAdd
   );
 }
 
-function MetalsView({ metals, onUpdateRate }: { metals: PreciousMetal[], onUpdateRate: (id: string, rate: number) => void }) {
+function MetalsView({ metals = [], onUpdateRate }: { metals: PreciousMetal[], onUpdateRate: (id: string, rate: number) => void }) {
+  const safeMetals = Array.isArray(metals) ? metals : [];
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {metals.map(metal => (
+        {safeMetals.map(metal => (
           <div key={metal.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -872,7 +881,7 @@ function MetalsView({ metals, onUpdateRate }: { metals: PreciousMetal[], onUpdat
               </div>
               <div className="text-right">
                 <p className="text-gray-400 text-xs mb-1 uppercase">Total Value</p>
-                <p className="text-2xl font-bold text-emerald-500">₹{(metal.rate * metal.holding).toLocaleString()}</p>
+                <p className="text-2xl font-bold text-emerald-500">₹{(Number(metal.rate || 0) * Number(metal.holding || 0)).toLocaleString()}</p>
               </div>
             </div>
             
@@ -900,16 +909,18 @@ function MetalsView({ metals, onUpdateRate }: { metals: PreciousMetal[], onUpdat
   );
 }
 
-function IncomeView({ income, businesses }: { income: Income[], businesses: Business[] }) {
+function IncomeView({ income = [], businesses = [] }: { income: Income[], businesses: Business[] }) {
+  const safeIncome = Array.isArray(income) ? income : [];
+  const safeBusinesses = Array.isArray(businesses) ? businesses : [];
   return (
     <div className="space-y-8">
       <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
         <h3 className="text-lg font-semibold mb-6">Monthly Income Streams</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {income.map(item => (
+          {safeIncome.map(item => (
             <div key={item.id} className="bg-white/5 p-4 rounded-xl border border-gray-800">
               <p className="text-gray-400 text-sm mb-1">{item.category}</p>
-              <h4 className="text-xl font-bold text-white">₹{item.amount.toLocaleString()}</h4>
+              <h4 className="text-xl font-bold text-white">₹{(Number(item.amount) || 0).toLocaleString()}</h4>
               <div className="mt-2 w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full" style={{ width: '65%' }} />
               </div>
@@ -921,29 +932,30 @@ function IncomeView({ income, businesses }: { income: Income[], businesses: Busi
       <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800">
         <h3 className="text-lg font-semibold mb-6">Business Performance</h3>
         <div className="space-y-6">
-          {businesses.map(biz => {
-            const progress = (biz.profit / biz.target) * 100;
+          {safeBusinesses.map(biz => {
+            const progress = (Number(biz.profit || 0) / Number(biz.target || 1)) * 100;
+            const safeProgress = isFinite(progress) ? progress : 0;
             return (
               <div key={biz.id} className="space-y-3">
                 <div className="flex justify-between items-end">
                   <div>
                     <h4 className="font-bold text-white">{biz.name}</h4>
-                    <p className="text-gray-400 text-xs">Investment: ₹{biz.investment.toLocaleString()}</p>
+                    <p className="text-gray-400 text-xs">Investment: ₹{(Number(biz.investment) || 0).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-emerald-500 font-bold">₹{biz.profit.toLocaleString()}</p>
-                    <p className="text-gray-400 text-xs">Target: ₹{biz.target.toLocaleString()}</p>
+                    <p className="text-emerald-500 font-bold">₹{(Number(biz.profit) || 0).toLocaleString()}</p>
+                    <p className="text-gray-400 text-xs">Target: ₹{(Number(biz.target) || 0).toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="w-full bg-gray-800 h-3 rounded-full overflow-hidden">
                   <div 
-                    className={cn("h-full transition-all duration-1000", progress >= 100 ? "bg-emerald-500" : "bg-blue-500")} 
-                    style={{ width: `${Math.min(progress, 100)}%` }} 
+                    className={cn("h-full transition-all duration-1000", safeProgress >= 100 ? "bg-emerald-500" : "bg-blue-500")} 
+                    style={{ width: `${Math.min(safeProgress, 100)}%` }} 
                   />
                 </div>
                 <div className="flex justify-between text-[10px] text-gray-500 uppercase font-bold">
                   <span>Achievement</span>
-                  <span>{progress.toFixed(1)}%</span>
+                  <span>{safeProgress.toFixed(1)}%</span>
                 </div>
               </div>
             );
@@ -1088,9 +1100,11 @@ function ProjectionView({ netWorth = 0, funds = [], otherSavings = 0 }: { netWor
   );
 }
 
-function LoansView({ loans, onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) => void }) {
+function LoansView({ loans = [], onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newLoan, setNewLoan] = useState<Partial<Loan>>({});
+
+  const safeLoans = Array.isArray(loans) ? loans : [];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1110,8 +1124,8 @@ function LoansView({ loans, onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) =
     }
   };
 
-  const totalLiability = loans.reduce((acc, l) => acc + l.remainingAmount, 0);
-  const totalEMI = loans.reduce((acc, l) => acc + l.emi, 0);
+  const totalLiability = safeLoans.reduce((acc, l) => acc + Number(l.remainingAmount || 0), 0);
+  const totalEMI = safeLoans.reduce((acc, l) => acc + Number(l.emi || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -1210,8 +1224,9 @@ function LoansView({ loans, onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) =
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {loans.map(loan => {
-          const progress = ((loan.totalAmount - loan.remainingAmount) / loan.totalAmount) * 100;
+        {safeLoans.map(loan => {
+          const progress = ((Number(loan.totalAmount || 0) - Number(loan.remainingAmount || 0)) / Number(loan.totalAmount || 1)) * 100;
+          const safeProgress = isFinite(progress) ? progress : 0;
           return (
             <div key={loan.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 group">
               <div className="flex justify-between items-start mb-4">
@@ -1224,25 +1239,25 @@ function LoansView({ loans, onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) =
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div>
                   <p className="text-gray-400 text-xs mb-1 uppercase">Monthly EMI</p>
-                  <p className="text-xl font-bold text-white">₹{loan.emi.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-white">₹{(Number(loan.emi) || 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-gray-400 text-xs mb-1 uppercase">Remaining</p>
-                  <p className="text-xl font-bold text-red-400">₹{loan.remainingAmount.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-red-400">₹{(Number(loan.remainingAmount) || 0).toLocaleString()}</p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-gray-500 uppercase font-bold">
                   <span>Repayment Progress</span>
-                  <span>{progress.toFixed(1)}%</span>
+                  <span>{safeProgress.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${progress}%` }} />
+                  <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${Math.min(safeProgress, 100)}%` }} />
                 </div>
                 <div className="flex justify-between text-[10px] text-gray-500">
-                  <span>Paid: ₹{(loan.totalAmount - loan.remainingAmount).toLocaleString()}</span>
-                  <span>Total: ₹{loan.totalAmount.toLocaleString()}</span>
+                  <span>Paid: ₹{(Number(loan.totalAmount || 0) - Number(loan.remainingAmount || 0)).toLocaleString()}</span>
+                  <span>Total: ₹{(Number(loan.totalAmount) || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -1325,8 +1340,10 @@ function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [financialGoals, setFinancialGoals] = useState("Retire with 10Cr in 20 years, Buy a house in 5 years");
 
-  const totalMonthlySIP = (funds || []).reduce((acc, f) => acc + (f.sipAmount || 0), 0);
-  const totalInvested = (funds || []).reduce((acc, f) => acc + (f.totalInvested || 0), 0);
+  const safeFunds = Array.isArray(funds) ? funds : [];
+
+  const totalMonthlySIP = safeFunds.reduce((acc, f) => acc + Number(f.sipAmount || 0), 0);
+  const totalInvested = safeFunds.reduce((acc, f) => acc + Number(f.totalInvested || 0), 0);
 
   const getAiSuggestion = async () => {
     setIsAiLoading(true);
@@ -1371,7 +1388,7 @@ function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
       <div className="bg-[#141414] rounded-2xl border border-gray-800 overflow-hidden">
         <div className="p-6 border-b border-gray-800 flex justify-between items-center">
           <h3 className="text-lg font-semibold">SIP Consolidation Table</h3>
-          <span className="text-xs text-gray-500 font-bold uppercase">{funds.length} Active SIPs</span>
+          <span className="text-xs text-gray-500 font-bold uppercase">{safeFunds.length} Active SIPs</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -1385,13 +1402,13 @@ function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {funds.map(fund => (
+              {safeFunds.map(fund => (
                 <tr key={fund.id} className="hover:bg-white/5 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{fund.name}</td>
-                  <td className="px-6 py-4 text-right text-emerald-500 font-bold">₹{fund.sipAmount.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right text-emerald-500 font-bold">₹{(Number(fund.sipAmount) || 0).toLocaleString()}</td>
                   <td className="px-6 py-4 text-right text-blue-400 font-medium">+{fund.stepUp}%</td>
                   <td className="px-6 py-4 text-center text-gray-400">{fund.sipDate}</td>
-                  <td className="px-6 py-4 text-right text-gray-300">₹{fund.totalInvested.toLocaleString()}</td>
+                  <td className="px-6 py-4 text-right text-gray-300">₹{(Number(fund.totalInvested) || 0).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
