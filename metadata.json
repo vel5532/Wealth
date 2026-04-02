@@ -1,0 +1,5 @@
+{
+  "name": "WealthWise Personal Finance Dashboard",
+  "description": "A comprehensive personal finance tracker with equity, mutual funds, gold, and future projections, integrated with Google Sheets.",
+  "requestFramePermissions": []
+}
