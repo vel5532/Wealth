@@ -40,6 +40,17 @@ export interface Business {
   profit: number;
 }
 
+export interface Loan {
+  id: string;
+  name: string;
+  totalAmount: number;
+  remainingAmount: number;
+  emi: number;
+  interestRate: number;
+  tenureMonths: number;
+  startDate: string;
+}
+
 export interface AppSettings {
   scriptUrl: string;
   sheetId: string;
@@ -51,4 +62,5 @@ export interface FinancialData {
   metals: PreciousMetal[];
   income: Income[];
   businesses: Business[];
+  loans: Loan[];
 }

@@ -39,7 +39,7 @@ import {
 } from 'recharts';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './lib/utils';
-import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppSettings } from './types';
+import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppSettings, Loan } from './types';
 
 // Persistent Settings Helper
 const getStoredSettings = (): AppSettings => {
@@ -71,6 +71,10 @@ const INITIAL_DATA: FinancialData = {
   ],
   businesses: [
     { id: '1', name: 'E-commerce Store', investment: 200000, target: 500000, profit: 120000 },
+  ],
+  loans: [
+    { id: '1', name: 'Home Loan', totalAmount: 5000000, remainingAmount: 4200000, emi: 45000, interestRate: 8.5, tenureMonths: 240, startDate: '2022-01-10' },
+    { id: '2', name: 'Car Loan', totalAmount: 1000000, remainingAmount: 650000, emi: 18000, interestRate: 9.2, tenureMonths: 60, startDate: '2023-05-15' },
   ]
 };
 
@@ -106,6 +110,13 @@ export default function App() {
     setData(prev => ({
       ...prev,
       mutualFunds: [...prev.mutualFunds, newFund]
+    }));
+  };
+
+  const addLoan = (newLoan: Loan) => {
+    setData(prev => ({
+      ...prev,
+      loans: [...prev.loans, newLoan]
     }));
   };
 
@@ -157,8 +168,12 @@ export default function App() {
     const silverValue = data.metals.filter(m => m.type === 'Silver').reduce((acc, m) => acc + (m.rate * m.holding), 0);
     
     const totalIncome = data.income.reduce((acc, i) => acc + i.amount, 0);
+    const totalSIP = data.mutualFunds.reduce((acc, mf) => acc + mf.sipAmount, 0);
     
-    const netWorth = equityCurrent + mfCurrent + goldValue + silverValue;
+    const totalLoanLiability = data.loans.reduce((acc, l) => acc + l.remainingAmount, 0);
+    const totalLoanEMI = data.loans.reduce((acc, l) => acc + l.emi, 0);
+
+    const netWorth = (equityCurrent + mfCurrent + goldValue + silverValue) - totalLoanLiability;
 
     return {
       equityInvested,
@@ -168,6 +183,9 @@ export default function App() {
       goldValue,
       silverValue,
       totalIncome,
+      totalSIP,
+      totalLoanLiability,
+      totalLoanEMI,
       netWorth
     };
   }, [data]);
@@ -195,6 +213,7 @@ export default function App() {
           <NavItem active={activeTab === 'stocks'} onClick={() => setActiveTab('stocks')} icon={<TrendingUp size={20} />} label="Stocks" />
           <NavItem active={activeTab === 'mf'} onClick={() => setActiveTab('mf')} icon={<PieChartIcon size={20} />} label="Mutual Funds" />
           <NavItem active={activeTab === 'gold'} onClick={() => setActiveTab('gold')} icon={<Coins size={20} />} label="Metals" />
+          <NavItem active={activeTab === 'loans'} onClick={() => setActiveTab('loans')} icon={<Wallet className="text-red-400" size={20} />} label="Loans" />
           <NavItem active={activeTab === 'income'} onClick={() => setActiveTab('income')} icon={<Briefcase size={20} />} label="Income" />
           <NavItem active={activeTab === 'sip-consolidated'} onClick={() => setActiveTab('sip-consolidated')} icon={<Zap size={20} />} label="SIP Tracker" />
           <NavItem active={activeTab === 'projection'} onClick={() => setActiveTab('projection')} icon={<LineChart size={20} />} label="Projection" />
@@ -223,9 +242,10 @@ export default function App() {
         {activeTab === 'stocks' && <StocksView stocks={data.stocks} onAddStock={addStock} />}
         {activeTab === 'mf' && <MutualFundsView funds={data.mutualFunds} onAddFund={addFund} />}
         {activeTab === 'gold' && <MetalsView metals={data.metals} onUpdateRate={updateMetalRate} />}
+        {activeTab === 'loans' && <LoansView loans={data.loans} onAddLoan={addLoan} />}
         {activeTab === 'income' && <IncomeView income={data.income} businesses={data.businesses} />}
         {activeTab === 'sip-consolidated' && <ConsolidatedSIPView funds={data.mutualFunds} />}
-        {activeTab === 'projection' && <ProjectionView netWorth={totals.netWorth} monthlySavings={totals.totalIncome * 0.4} />}
+        {activeTab === 'projection' && <ProjectionView netWorth={totals.netWorth} funds={data.mutualFunds} otherSavings={totals.totalIncome * 0.4 - totals.totalSIP} />}
         {activeTab === 'settings' && <SettingsView settings={settings} onSave={setSettings} />}
       </main>
     </div>
@@ -254,7 +274,7 @@ function DashboardView({ totals, chartData, data }: { totals: any, chartData: an
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard title="Net Worth" value={totals.netWorth} icon={<Wallet className="text-emerald-500" />} trend="+12.5%" />
         <SummaryCard title="Equity Value" value={totals.equityCurrent} icon={<TrendingUp className="text-blue-500" />} trend="+8.2%" />
-        <SummaryCard title="MF Value" value={totals.mfCurrent} icon={<PieChartIcon className="text-amber-500" />} trend="+15.1%" />
+        <SummaryCard title="Loan Liability" value={totals.totalLoanLiability} icon={<TrendingDown className="text-red-500" />} trend="-2.1%" />
         <SummaryCard title="Monthly Income" value={totals.totalIncome} icon={<Briefcase className="text-purple-500" />} />
       </div>
 
@@ -313,6 +333,7 @@ function DashboardView({ totals, chartData, data }: { totals: any, chartData: an
 }
 
 function SummaryCard({ title, value, icon, trend }: { title: string, value: number, icon: React.ReactNode, trend?: string }) {
+  const isNegative = title.toLowerCase().includes('loan') || title.toLowerCase().includes('liability');
   return (
     <div className="bg-[#141414] p-6 rounded-2xl border border-gray-800 hover:border-emerald-500/30 transition-all group">
       <div className="flex justify-between items-start mb-4">
@@ -320,13 +341,13 @@ function SummaryCard({ title, value, icon, trend }: { title: string, value: numb
           {icon}
         </div>
         {trend && (
-          <span className="text-xs font-medium text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+          <span className={cn("text-xs font-medium px-2 py-1 rounded-full", isNegative ? "text-red-500 bg-red-500/10" : "text-emerald-500 bg-emerald-500/10")}>
             {trend}
           </span>
         )}
       </div>
       <p className="text-gray-400 text-sm mb-1">{title}</p>
-      <h4 className="text-2xl font-bold text-white">₹{value.toLocaleString()}</h4>
+      <h4 className={cn("text-2xl font-bold", isNegative ? "text-red-400" : "text-white")}>₹{value.toLocaleString()}</h4>
     </div>
   );
 }
@@ -700,7 +721,17 @@ function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund:
               </div>
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-gray-800">
-              <span className="text-sm text-gray-400">Current NAV: ₹{fund.nav}</span>
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 uppercase font-bold">10-Year Projection</span>
+                <span className="text-emerald-500 font-bold">
+                  ₹{Math.round(
+                    Array.from<any>({ length: 10 }).reduce((acc: number, _: any, i: number) => {
+                      const yearlySIP = (fund.sipAmount * Math.pow(1 + fund.stepUp / 100, i)) * 12;
+                      return (acc + yearlySIP) * 1.12; // Assuming 12% growth
+                    }, fund.totalInvested)
+                  ).toLocaleString()}
+                </span>
+              </div>
               <button className="text-emerald-500 text-sm font-medium flex items-center gap-1 hover:underline">
                 View Details <ChevronRight size={16} />
               </button>
@@ -824,14 +855,16 @@ function IncomeView({ income, businesses }: { income: Income[], businesses: Busi
   );
 }
 
-function ProjectionView({ netWorth, monthlySavings }: { netWorth: number, monthlySavings: number }) {
+function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, funds: MutualFund[], otherSavings: number }) {
   const [growthRate, setGrowthRate] = useState(12);
   const [years, setYears] = useState(30);
 
   const projectionData = useMemo(() => {
     let currentWealth = netWorth;
     const data = [];
-    const annualSavings = monthlySavings * 12;
+    
+    // Track each fund's SIP separately to apply individual step-ups
+    let currentFunds = funds.map(f => ({ ...f }));
 
     for (let i = 0; i <= years; i++) {
       data.push({
@@ -839,10 +872,23 @@ function ProjectionView({ netWorth, monthlySavings }: { netWorth: number, monthl
         wealth: Math.round(currentWealth),
         milestone: currentWealth >= 1000000000 ? '100Cr' : currentWealth >= 100000000 ? '10Cr' : currentWealth >= 10000000 ? '1Cr' : null
       });
-      currentWealth = (currentWealth + annualSavings) * (1 + growthRate / 100);
+
+      // Calculate annual savings for this year
+      const annualSIP = currentFunds.reduce((acc, f) => acc + (f.sipAmount * 12), 0);
+      const annualOtherSavings = Math.max(0, otherSavings * 12);
+      const totalAnnualSavings = annualSIP + annualOtherSavings;
+
+      // Apply growth and add savings
+      currentWealth = (currentWealth + totalAnnualSavings) * (1 + growthRate / 100);
+
+      // Apply annual step-up to each fund for the NEXT year
+      currentFunds = currentFunds.map(f => ({
+        ...f,
+        sipAmount: f.sipAmount * (1 + f.stepUp / 100)
+      }));
     }
     return data;
-  }, [netWorth, monthlySavings, growthRate, years]);
+  }, [netWorth, funds, otherSavings, growthRate, years]);
 
   return (
     <div className="space-y-8">
@@ -937,6 +983,171 @@ function ProjectionView({ netWorth, monthlySavings }: { netWorth: number, monthl
   );
 }
 
+function LoansView({ loans, onAddLoan }: { loans: Loan[], onAddLoan: (l: Loan) => void }) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLoan, setNewLoan] = useState<Partial<Loan>>({});
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newLoan.name && newLoan.totalAmount && newLoan.remainingAmount && newLoan.emi) {
+      onAddLoan({
+        id: Math.random().toString(36).substr(2, 9),
+        name: newLoan.name,
+        totalAmount: Number(newLoan.totalAmount),
+        remainingAmount: Number(newLoan.remainingAmount),
+        emi: Number(newLoan.emi),
+        interestRate: Number(newLoan.interestRate || 0),
+        tenureMonths: Number(newLoan.tenureMonths || 0),
+        startDate: newLoan.startDate || new Date().toISOString().split('T')[0]
+      });
+      setShowAddForm(false);
+      setNewLoan({});
+    }
+  };
+
+  const totalLiability = loans.reduce((acc, l) => acc + l.remainingAmount, 0);
+  const totalEMI = loans.reduce((acc, l) => acc + l.emi, 0);
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl">
+          <p className="text-red-500 text-sm font-bold uppercase mb-1">Total Loan Liability</p>
+          <h4 className="text-3xl font-bold text-white">₹{totalLiability.toLocaleString()}</h4>
+        </div>
+        <div className="bg-orange-500/10 border border-orange-500/20 p-6 rounded-2xl">
+          <p className="text-orange-500 text-sm font-bold uppercase mb-1">Total Monthly EMI</p>
+          <h4 className="text-3xl font-bold text-white">₹{totalEMI.toLocaleString()}</h4>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Active Loans</h3>
+        <button 
+          onClick={() => setShowAddForm(!showAddForm)}
+          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+        >
+          <Plus size={18} />
+          Add Loan
+        </button>
+      </div>
+
+      {showAddForm && (
+        <form onSubmit={handleSubmit} className="bg-[#141414] p-6 rounded-2xl border border-red-500/30 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Loan Name</label>
+            <input 
+              placeholder="e.g. Home Loan" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.name || ''}
+              onChange={e => setNewLoan({...newLoan, name: e.target.value})}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Total Loan Amount</label>
+            <input 
+              type="number" 
+              placeholder="Total Amount" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.totalAmount || ''}
+              onChange={e => setNewLoan({...newLoan, totalAmount: Number(e.target.value)})}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Remaining Principal</label>
+            <input 
+              type="number" 
+              placeholder="Remaining Principal" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.remainingAmount || ''}
+              onChange={e => setNewLoan({...newLoan, remainingAmount: Number(e.target.value)})}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Monthly EMI</label>
+            <input 
+              type="number" 
+              placeholder="EMI" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.emi || ''}
+              onChange={e => setNewLoan({...newLoan, emi: Number(e.target.value)})}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Interest Rate (%)</label>
+            <input 
+              type="number" 
+              step="0.1"
+              placeholder="Interest Rate" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.interestRate || ''}
+              onChange={e => setNewLoan({...newLoan, interestRate: Number(e.target.value)})}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs text-gray-500 font-bold uppercase">Start Date</label>
+            <input 
+              type="date" 
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white"
+              value={newLoan.startDate || ''}
+              onChange={e => setNewLoan({...newLoan, startDate: e.target.value})}
+            />
+          </div>
+          <div className="lg:col-span-3 flex justify-end gap-3 mt-2">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+            <button type="submit" className="px-6 py-2 bg-red-500 text-white rounded-lg font-bold">Save Loan</button>
+          </div>
+        </form>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {loans.map(loan => {
+          const progress = ((loan.totalAmount - loan.remainingAmount) / loan.totalAmount) * 100;
+          return (
+            <div key={loan.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 group">
+              <div className="flex justify-between items-start mb-4">
+                <h4 className="text-lg font-bold text-white">{loan.name}</h4>
+                <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-full">
+                  {loan.interestRate}% Interest
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-gray-400 text-xs mb-1 uppercase">Monthly EMI</p>
+                  <p className="text-xl font-bold text-white">₹{loan.emi.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-xs mb-1 uppercase">Remaining</p>
+                  <p className="text-xl font-bold text-red-400">₹{loan.remainingAmount.toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-gray-500 uppercase font-bold">
+                  <span>Repayment Progress</span>
+                  <span>{progress.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full transition-all duration-1000" style={{ width: `${progress}%` }} />
+                </div>
+                <div className="flex justify-between text-[10px] text-gray-500">
+                  <span>Paid: ₹{(loan.totalAmount - loan.remainingAmount).toLocaleString()}</span>
+                  <span>Total: ₹{loan.totalAmount.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s: AppSettings) => void }) {
   const [form, setForm] = useState(settings);
 
@@ -1007,6 +1218,7 @@ function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s:
 function ConsolidatedSIPView({ funds }: { funds: MutualFund[] }) {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [financialGoals, setFinancialGoals] = useState("Retire with 10Cr in 20 years, Buy a house in 5 years");
 
   const totalMonthlySIP = funds.reduce((acc, f) => acc + f.sipAmount, 0);
   const totalInvested = funds.reduce((acc, f) => acc + f.totalInvested, 0);
@@ -1017,9 +1229,12 @@ function ConsolidatedSIPView({ funds }: { funds: MutualFund[] }) {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
       const prompt = `I have the following mutual fund SIPs: ${JSON.stringify(funds.map(f => ({ name: f.name, amount: f.sipAmount, stepUp: f.stepUp })))}. 
       My total monthly SIP is ₹${totalMonthlySIP}. 
-      Please provide a concise financial suggestion for "Step-up SIP" strategy. 
-      Suggest specific step-up percentages or amounts for each fund to beat inflation and reach long-term goals faster. 
-      Keep the response professional, encouraging, and formatted in clear bullet points.`;
+      My financial goals are: "${financialGoals}".
+      
+      Please provide a detailed and personalized financial suggestion for a "Step-up SIP" strategy to achieve these goals. 
+      Suggest specific step-up percentages or amounts for each fund. 
+      Analyze if the current SIPs are sufficient for the stated goals.
+      Keep the response professional, encouraging, and formatted in clear bullet points with bold headings.`;
 
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
@@ -1085,32 +1300,45 @@ function ConsolidatedSIPView({ funds }: { funds: MutualFund[] }) {
           <Zap size={120} className="text-emerald-500" />
         </div>
         
-        <div className="relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="relative z-10 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <ArrowUpCircle className="text-emerald-500" />
-                AI Step-up Suggestions
+                AI Personalized Wealth Strategy
               </h3>
-              <p className="text-gray-400 text-sm">Get personalized advice on increasing your SIPs for maximum wealth creation.</p>
+              <p className="text-gray-400 text-sm">Get personalized advice based on your SIPs and financial goals.</p>
             </div>
-            <button 
-              onClick={getAiSuggestion}
-              disabled={isAiLoading}
-              className="px-6 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              {isAiLoading ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
-              Generate Suggestions
-            </button>
           </div>
 
-          {aiSuggestion ? (
-            <div className="bg-white/5 border border-gray-800 p-6 rounded-xl text-gray-300 leading-relaxed whitespace-pre-wrap">
+          <div className="space-y-2">
+            <label className="text-xs text-gray-500 font-bold uppercase">Your Financial Goals</label>
+            <textarea 
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-all h-24 resize-none"
+              placeholder="e.g. Retire with 5Cr in 15 years, Child's education in 10 years..."
+              value={financialGoals}
+              onChange={e => setFinancialGoals(e.target.value)}
+            />
+          </div>
+
+          <button 
+            onClick={getAiSuggestion}
+            disabled={isAiLoading}
+            className="w-full md:w-auto px-8 py-4 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-emerald-500/20"
+          >
+            {isAiLoading ? <RefreshCw className="animate-spin" size={20} /> : <Zap size={20} />}
+            {aiSuggestion ? "Regenerate Strategy" : "Generate Personalized Strategy"}
+          </button>
+
+          {aiSuggestion && (
+            <div className="bg-white/5 border border-gray-800 p-6 rounded-xl text-gray-300 leading-relaxed whitespace-pre-wrap animate-in fade-in slide-in-from-bottom-4 duration-500">
               {aiSuggestion}
             </div>
-          ) : (
-            <div className="text-center py-12 border-2 border-dashed border-gray-800 rounded-xl">
-              <p className="text-gray-500">Click the button above to generate AI-powered SIP step-up suggestions.</p>
+          )}
+          
+          {!aiSuggestion && !isAiLoading && (
+            <div className="text-center py-8 border-2 border-dashed border-gray-800 rounded-xl">
+              <p className="text-gray-500">Define your goals and click the button to get AI insights.</p>
             </div>
           )}
         </div>
