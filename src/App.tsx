@@ -43,8 +43,13 @@ import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppS
 
 // Persistent Settings Helper
 const getStoredSettings = (): AppSettings => {
-  const stored = localStorage.getItem('wealthwise_settings');
-  return stored ? JSON.parse(stored) : { scriptUrl: '', sheetId: '' };
+  try {
+    const stored = localStorage.getItem('wealthwise_settings');
+    return stored ? JSON.parse(stored) : { scriptUrl: '', sheetId: '' };
+  } catch (e) {
+    console.error('Error parsing stored settings:', e);
+    return { scriptUrl: '', sheetId: '' };
+  }
 };
 
 // Mock Data for initial state
@@ -58,7 +63,7 @@ const INITIAL_DATA: FinancialData = {
   ],
   mutualFunds: [
     { id: '1', name: 'Parag Parikh Flexi Cap', sipAmount: 5000, totalInvested: 120000, nav: 72.5, sipDate: '15th', stepUp: 10 },
-    { id: '2', name: 'Mirae Asset Large Cap', sipAmount: 3000, totalInvested: 85000, nav: 110.2, sipDate: '5th', stepUp: 500 },
+    { id: '2', name: 'Mirae Asset Large Cap', sipAmount: 3000, totalInvested: 85000, nav: 110.2, sipDate: '5th', stepUp: 5 },
   ],
   metals: [
     { id: '1', type: 'Gold', rate: 6500, holding: 20 },
@@ -880,6 +885,11 @@ function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, f
 
       // Apply growth and add savings
       currentWealth = (currentWealth + totalAnnualSavings) * (1 + growthRate / 100);
+
+      // Safety check for Infinity
+      if (!isFinite(currentWealth)) {
+        currentWealth = 1e15; // Cap at a very large number
+      }
 
       // Apply annual step-up to each fund for the NEXT year
       currentFunds = currentFunds.map(f => ({
