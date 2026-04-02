@@ -20,7 +20,8 @@ import {
   Target,
   Settings as SettingsIcon,
   Zap,
-  ArrowUpCircle
+  ArrowUpCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -85,7 +86,62 @@ const INITIAL_DATA: FinancialData = {
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-[#141414] border border-red-500/30 p-8 rounded-2xl text-center space-y-6">
+            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="text-red-500 w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-white">Something went wrong</h2>
+              <p className="text-gray-400 text-sm">
+                The application encountered an unexpected error. This might be due to corrupted data or a calculation overflow.
+              </p>
+            </div>
+            <div className="bg-black/20 p-4 rounded-xl text-left overflow-auto max-h-32">
+              <code className="text-xs text-red-400">{this.state.error?.message}</code>
+            </div>
+            <button 
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="w-full py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 transition-all"
+            >
+              Clear Data & Reset App
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (this as any).props.children;
+  }
+}
+
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <WealthWiseApp />
+    </ErrorBoundary>
+  );
+}
+
+function WealthWiseApp() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [data, setData] = useState<FinancialData>(INITIAL_DATA);
   const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
@@ -100,28 +156,28 @@ export default function App() {
   const updateMetalRate = (id: string, newRate: number) => {
     setData(prev => ({
       ...prev,
-      metals: prev.metals.map(m => m.id === id ? { ...m, rate: newRate } : m)
+      metals: (prev.metals || []).map(m => m.id === id ? { ...m, rate: newRate } : m)
     }));
   };
 
   const addStock = (newStock: Stock) => {
     setData(prev => ({
       ...prev,
-      stocks: [...prev.stocks, newStock]
+      stocks: [...(prev.stocks || []), newStock]
     }));
   };
 
   const addFund = (newFund: MutualFund) => {
     setData(prev => ({
       ...prev,
-      mutualFunds: [...prev.mutualFunds, newFund]
+      mutualFunds: [...(prev.mutualFunds || []), newFund]
     }));
   };
 
   const addLoan = (newLoan: Loan) => {
     setData(prev => ({
       ...prev,
-      loans: [...prev.loans, newLoan]
+      loans: [...(prev.loans || []), newLoan]
     }));
   };
 
@@ -140,7 +196,7 @@ export default function App() {
       try {
         const response = await fetch(`${settings.scriptUrl}?action=getData&sheetId=${settings.sheetId}`);
         const result = await response.json();
-        if (result.status === 'success') {
+        if (result.status === 'success' && result.data) {
           setData(result.data);
         }
       } catch (error) {
@@ -150,7 +206,7 @@ export default function App() {
       // Fallback to simulation if no script URL is provided
       setData(prev => ({
         ...prev,
-        stocks: prev.stocks.map(s => ({
+        stocks: (prev.stocks || []).map(s => ({
           ...s,
           cmp: s.cmp ? s.cmp * (1 + (Math.random() * 0.02 - 0.01)) : s.avgPrice
         }))
@@ -162,21 +218,27 @@ export default function App() {
   };
 
   const totals = useMemo(() => {
-    const equityInvested = data.stocks.reduce((acc, s) => acc + (s.quantity * s.avgPrice), 0);
-    const equityCurrent = data.stocks.reduce((acc, s) => acc + (s.quantity * (s.cmp || s.avgPrice)), 0);
+    const stocks = data?.stocks || [];
+    const mutualFunds = data?.mutualFunds || [];
+    const metals = data?.metals || [];
+    const income = data?.income || [];
+    const loans = data?.loans || [];
+
+    const equityInvested = stocks.reduce((acc, s) => acc + (s.quantity * s.avgPrice), 0);
+    const equityCurrent = stocks.reduce((acc, s) => acc + (s.quantity * (s.cmp || s.avgPrice)), 0);
     
-    const mfInvested = data.mutualFunds.reduce((acc, mf) => acc + mf.totalInvested, 0);
+    const mfInvested = mutualFunds.reduce((acc, mf) => acc + mf.totalInvested, 0);
     // Simple current value calculation for MF (mock)
     const mfCurrent = mfInvested * 1.15; 
 
-    const goldValue = data.metals.filter(m => m.type === 'Gold').reduce((acc, m) => acc + (m.rate * m.holding), 0);
-    const silverValue = data.metals.filter(m => m.type === 'Silver').reduce((acc, m) => acc + (m.rate * m.holding), 0);
+    const goldValue = metals.filter(m => m.type === 'Gold').reduce((acc, m) => acc + (m.rate * m.holding), 0);
+    const silverValue = metals.filter(m => m.type === 'Silver').reduce((acc, m) => acc + (m.rate * m.holding), 0);
     
-    const totalIncome = data.income.reduce((acc, i) => acc + i.amount, 0);
-    const totalSIP = data.mutualFunds.reduce((acc, mf) => acc + mf.sipAmount, 0);
+    const totalIncome = income.reduce((acc, i) => acc + i.amount, 0);
+    const totalSIP = mutualFunds.reduce((acc, mf) => acc + mf.sipAmount, 0);
     
-    const totalLoanLiability = data.loans.reduce((acc, l) => acc + l.remainingAmount, 0);
-    const totalLoanEMI = data.loans.reduce((acc, l) => acc + l.emi, 0);
+    const totalLoanLiability = loans.reduce((acc, l) => acc + l.remainingAmount, 0);
+    const totalLoanEMI = loans.reduce((acc, l) => acc + l.emi, 0);
 
     const netWorth = (equityCurrent + mfCurrent + goldValue + silverValue) - totalLoanLiability;
 
@@ -228,18 +290,49 @@ export default function App() {
 
       {/* Main Content */}
       <main className="lg:ml-64 pb-24 lg:pb-8 p-4 lg:p-8">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-white capitalize">{activeTab}</h2>
-            <p className="text-gray-400 text-sm">Last updated: {lastUpdated.toLocaleTimeString()}</p>
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+          <div className="flex items-center gap-5">
+            <div className="hidden md:flex w-12 h-12 bg-emerald-500/10 rounded-2xl items-center justify-center border border-emerald-500/20">
+              <RefreshCw className={cn("text-emerald-500 w-6 h-6", isLoading && "animate-spin")} />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-3xl font-bold text-white capitalize tracking-tight">{activeTab}</h2>
+                {!isLoading && (
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider rounded-full border border-emerald-500/20">
+                    <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse" />
+                    Live
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1.5">
+                <p className="text-gray-400 text-sm font-medium">
+                  {isLoading ? (
+                    <span className="flex items-center gap-2 text-blue-400">
+                      <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />
+                      Syncing with Google Sheets...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-gray-500">Last synced:</span>
+                      <span className="text-gray-300">{lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
           <button 
             onClick={refreshData}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-500 rounded-lg hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+            className="group relative flex items-center gap-3 px-6 py-3 bg-[#141414] border border-gray-800 text-gray-300 rounded-2xl hover:border-emerald-500/50 hover:text-white transition-all disabled:opacity-50 active:scale-95 overflow-hidden"
           >
-            <RefreshCw size={18} className={cn(isLoading && "animate-spin")} />
-            Refresh Data
+            <div className={cn(
+              "absolute inset-0 bg-emerald-500/5 translate-y-full transition-transform duration-300 group-hover:translate-y-0",
+              isLoading && "translate-y-0"
+            )} />
+            <RefreshCw size={20} className={cn("relative z-10 transition-transform duration-700", isLoading && "animate-spin")} />
+            <span className="relative z-10 font-bold text-sm">Refresh Data</span>
           </button>
         </header>
 
@@ -559,7 +652,7 @@ function StocksView({ stocks, onAddStock }: { stocks: Stock[], onAddStock: (s: S
   );
 }
 
-function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund: (f: MutualFund) => void }) {
+function MutualFundsView({ funds = [], onAddFund }: { funds: MutualFund[], onAddFund: (f: MutualFund) => void }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newFund, setNewFund] = useState<Partial<MutualFund>>({ sipDate: '15th', stepUp: 10 });
 
@@ -701,7 +794,7 @@ function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund:
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {funds.map(fund => (
+        {(funds || []).map(fund => (
           <div key={fund.id} className="bg-[#141414] p-6 rounded-2xl border border-gray-800 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
               <PieChartIcon size={80} />
@@ -710,11 +803,11 @@ function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund:
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
                 <p className="text-gray-400 text-xs mb-1 uppercase">Monthly SIP</p>
-                <p className="text-xl font-bold">₹{fund.sipAmount.toLocaleString()}</p>
+                <p className="text-xl font-bold">₹{(fund.sipAmount || 0).toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-1 uppercase">Total Invested</p>
-                <p className="text-xl font-bold">₹{fund.totalInvested.toLocaleString()}</p>
+                <p className="text-xl font-bold">₹{(fund.totalInvested || 0).toLocaleString()}</p>
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-1 uppercase">SIP Date</p>
@@ -722,7 +815,7 @@ function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund:
               </div>
               <div>
                 <p className="text-gray-400 text-xs mb-1 uppercase">Step-up</p>
-                <p className="text-emerald-500 font-medium">+{fund.stepUp}%</p>
+                <p className="text-emerald-500 font-medium">+{(fund.stepUp || 0)}%</p>
               </div>
             </div>
             <div className="flex items-center justify-between pt-4 border-t border-gray-800">
@@ -731,9 +824,10 @@ function MutualFundsView({ funds, onAddFund }: { funds: MutualFund[], onAddFund:
                 <span className="text-emerald-500 font-bold">
                   ₹{Math.round(
                     Array.from<any>({ length: 10 }).reduce((acc: number, _: any, i: number) => {
-                      const yearlySIP = (fund.sipAmount * Math.pow(1 + fund.stepUp / 100, i)) * 12;
-                      return (acc + yearlySIP) * 1.12; // Assuming 12% growth
-                    }, fund.totalInvested)
+                      const yearlySIP = ((fund.sipAmount || 0) * Math.pow(1 + (fund.stepUp || 0) / 100, i)) * 12;
+                      const nextVal = (acc + yearlySIP) * 1.12; // Assuming 12% growth
+                      return isFinite(nextVal) ? nextVal : acc;
+                    }, fund.totalInvested || 0)
                   ).toLocaleString()}
                 </span>
               </div>
@@ -860,7 +954,7 @@ function IncomeView({ income, businesses }: { income: Income[], businesses: Busi
   );
 }
 
-function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, funds: MutualFund[], otherSavings: number }) {
+function ProjectionView({ netWorth = 0, funds = [], otherSavings = 0 }: { netWorth: number, funds: MutualFund[], otherSavings: number }) {
   const [growthRate, setGrowthRate] = useState(12);
   const [years, setYears] = useState(30);
 
@@ -869,7 +963,7 @@ function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, f
     const data = [];
     
     // Track each fund's SIP separately to apply individual step-ups
-    let currentFunds = funds.map(f => ({ ...f }));
+    let currentFunds = (funds || []).map(f => ({ ...f }));
 
     for (let i = 0; i <= years; i++) {
       data.push({
@@ -879,12 +973,13 @@ function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, f
       });
 
       // Calculate annual savings for this year
-      const annualSIP = currentFunds.reduce((acc, f) => acc + (f.sipAmount * 12), 0);
-      const annualOtherSavings = Math.max(0, otherSavings * 12);
+      const annualSIP = currentFunds.reduce((acc, f) => acc + ((f.sipAmount || 0) * 12), 0);
+      const annualOtherSavings = Math.max(0, (otherSavings || 0) * 12);
       const totalAnnualSavings = annualSIP + annualOtherSavings;
 
       // Apply growth and add savings
-      currentWealth = (currentWealth + totalAnnualSavings) * (1 + growthRate / 100);
+      const nextWealth = (currentWealth + totalAnnualSavings) * (1 + growthRate / 100);
+      currentWealth = isFinite(nextWealth) ? nextWealth : currentWealth;
 
       // Safety check for Infinity
       if (!isFinite(currentWealth)) {
@@ -894,7 +989,7 @@ function ProjectionView({ netWorth, funds, otherSavings }: { netWorth: number, f
       // Apply annual step-up to each fund for the NEXT year
       currentFunds = currentFunds.map(f => ({
         ...f,
-        sipAmount: f.sipAmount * (1 + f.stepUp / 100)
+        sipAmount: (f.sipAmount || 0) * (1 + (f.stepUp || 0) / 100)
       }));
     }
     return data;
@@ -1225,13 +1320,13 @@ function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s:
   );
 }
 
-function ConsolidatedSIPView({ funds }: { funds: MutualFund[] }) {
+function ConsolidatedSIPView({ funds = [] }: { funds: MutualFund[] }) {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [financialGoals, setFinancialGoals] = useState("Retire with 10Cr in 20 years, Buy a house in 5 years");
 
-  const totalMonthlySIP = funds.reduce((acc, f) => acc + f.sipAmount, 0);
-  const totalInvested = funds.reduce((acc, f) => acc + f.totalInvested, 0);
+  const totalMonthlySIP = (funds || []).reduce((acc, f) => acc + (f.sipAmount || 0), 0);
+  const totalInvested = (funds || []).reduce((acc, f) => acc + (f.totalInvested || 0), 0);
 
   const getAiSuggestion = async () => {
     setIsAiLoading(true);
