@@ -17,7 +17,8 @@ import {
   RefreshCw,
   ChevronRight,
   TrendingDown,
-  Target
+  Target,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -35,7 +36,13 @@ import {
   Area
 } from 'recharts';
 import { cn } from './lib/utils';
-import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData } from './types';
+import { Stock, MutualFund, PreciousMetal, Income, Business, FinancialData, AppSettings } from './types';
+
+// Persistent Settings Helper
+const getStoredSettings = (): AppSettings => {
+  const stored = localStorage.getItem('wealthwise_settings');
+  return stored ? JSON.parse(stored) : { scriptUrl: '', sheetId: '' };
+};
 
 // Mock Data for initial state
 const INITIAL_DATA: FinancialData = {
@@ -69,8 +76,14 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [data, setData] = useState<FinancialData>(INITIAL_DATA);
+  const [settings, setSettings] = useState<AppSettings>(getStoredSettings());
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('wealthwise_settings', JSON.stringify(settings));
+  }, [settings]);
 
   const updateMetalRate = (id: string, newRate: number) => {
     setData(prev => ({
@@ -96,15 +109,28 @@ export default function App() {
 
   const refreshData = async () => {
     setIsLoading(true);
-    // In a real app, this would fetch from Google Sheets and Yahoo Finance
-    // Simulate CMP updates
-    setData(prev => ({
-      ...prev,
-      stocks: prev.stocks.map(s => ({
-        ...s,
-        cmp: s.cmp ? s.cmp * (1 + (Math.random() * 0.02 - 0.01)) : s.avgPrice
-      }))
-    }));
+    
+    if (settings.scriptUrl) {
+      try {
+        const response = await fetch(`${settings.scriptUrl}?action=getData&sheetId=${settings.sheetId}`);
+        const result = await response.json();
+        if (result.status === 'success') {
+          setData(result.data);
+        }
+      } catch (error) {
+        console.error('Error fetching data from Google Sheets:', error);
+      }
+    } else {
+      // Fallback to simulation if no script URL is provided
+      setData(prev => ({
+        ...prev,
+        stocks: prev.stocks.map(s => ({
+          ...s,
+          cmp: s.cmp ? s.cmp * (1 + (Math.random() * 0.02 - 0.01)) : s.avgPrice
+        }))
+      }));
+    }
+    
     setLastUpdated(new Date());
     setIsLoading(false);
   };
@@ -161,6 +187,7 @@ export default function App() {
           <NavItem active={activeTab === 'gold'} onClick={() => setActiveTab('gold')} icon={<Coins size={20} />} label="Metals" />
           <NavItem active={activeTab === 'income'} onClick={() => setActiveTab('income')} icon={<Briefcase size={20} />} label="Income" />
           <NavItem active={activeTab === 'projection'} onClick={() => setActiveTab('projection')} icon={<LineChart size={20} />} label="Projection" />
+          <NavItem active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<SettingsIcon size={20} />} label="Settings" />
         </div>
       </nav>
 
@@ -187,6 +214,7 @@ export default function App() {
         {activeTab === 'gold' && <MetalsView metals={data.metals} onUpdateRate={updateMetalRate} />}
         {activeTab === 'income' && <IncomeView income={data.income} businesses={data.businesses} />}
         {activeTab === 'projection' && <ProjectionView netWorth={totals.netWorth} monthlySavings={totals.totalIncome * 0.4} />}
+        {activeTab === 'settings' && <SettingsView settings={settings} onSave={setSettings} />}
       </main>
     </div>
   );
@@ -749,6 +777,73 @@ function ProjectionView({ netWorth, monthlySavings }: { netWorth: number, monthl
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+function SettingsView({ settings, onSave }: { settings: AppSettings, onSave: (s: AppSettings) => void }) {
+  const [form, setForm] = useState(settings);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
+    alert('Settings saved successfully!');
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-8">
+      <div className="bg-[#141414] p-8 rounded-2xl border border-gray-800">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+          <SettingsIcon className="text-emerald-500" />
+          Backend Configuration
+        </h3>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-400">Google Apps Script Web App URL</label>
+            <input 
+              type="url" 
+              placeholder="https://script.google.com/macros/s/.../exec"
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-all"
+              value={form.scriptUrl}
+              onChange={e => setForm({...form, scriptUrl: e.target.value})}
+            />
+            <p className="text-xs text-gray-500">The URL you get after deploying your Google Apps Script as a Web App.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-400">Google Sheet ID</label>
+            <input 
+              type="text" 
+              placeholder="1a2b3c4d5e6f7g8h9i0j..."
+              className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-emerald-500 outline-none transition-all"
+              value={form.sheetId}
+              onChange={e => setForm({...form, sheetId: e.target.value})}
+            />
+            <p className="text-xs text-gray-500">Found in the URL of your Google Sheet: docs.google.com/spreadsheets/d/<b>[SHEET_ID]</b>/edit</p>
+          </div>
+
+          <div className="pt-4">
+            <button 
+              type="submit"
+              className="w-full py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+            >
+              Save Configuration
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div className="bg-blue-500/10 border border-blue-500/20 p-6 rounded-2xl">
+        <h4 className="text-blue-400 font-bold mb-2">How to set up?</h4>
+        <ol className="text-sm text-gray-400 space-y-2 list-decimal ml-4">
+          <li>Create a new Google Sheet and copy its ID from the URL.</li>
+          <li>Go to Extensions &gt; Apps Script and paste the provided backend code.</li>
+          <li>Deploy as a Web App (Execute as: Me, Access: Anyone).</li>
+          <li>Copy the Web App URL and paste it above.</li>
+          <li>Your data will now be stored and synced with your Google Sheet!</li>
+        </ol>
       </div>
     </div>
   );

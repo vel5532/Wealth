@@ -12,12 +12,26 @@
 const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
 
 function doGet(e) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const data = {};
+  const sheetId = e.parameter.sheetId;
+  let ss;
+  try {
+    ss = sheetId ? SpreadsheetApp.openById(sheetId) : SpreadsheetApp.getActiveSpreadsheet();
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid Sheet ID' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  const data = {
+    stocks: [],
+    mutualFunds: [],
+    metals: [],
+    income: [],
+    businesses: []
+  };
   
   const sheets = ss.getSheets();
   sheets.forEach(sheet => {
-    const name = sheet.getName();
+    const name = sheet.getName().toLowerCase();
     const values = sheet.getDataRange().getValues();
     if (values.length > 1) {
       const headers = values[0];
@@ -28,13 +42,16 @@ function doGet(e) {
         });
         return obj;
       });
-      data[name] = rows;
-    } else {
-      data[name] = [];
+      
+      if (name.includes('stock')) data.stocks = rows;
+      else if (name.includes('fund') || name.includes('mf')) data.mutualFunds = rows;
+      else if (name.includes('metal') || name.includes('gold')) data.metals = rows;
+      else if (name.includes('income')) data.income = rows;
+      else if (name.includes('business')) data.businesses = rows;
     }
   });
   
-  return ContentService.createTextOutput(JSON.stringify(data))
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', data }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 

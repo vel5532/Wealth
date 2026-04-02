@@ -40,6 +40,11 @@ export interface Business {
   profit: number;
 }
 
+export interface AppSettings {
+  scriptUrl: string;
+  sheetId: string;
+}
+
 export interface FinancialData {
   stocks: Stock[];
   mutualFunds: MutualFund[];
