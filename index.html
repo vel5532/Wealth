@@ -1,13 +1,1165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WealthTrack Pro - Personal Finance Dashboard</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(71, 85, 105, 0.5);
+            padding: 2rem 1rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #3b82f6;
+            display: inline-block;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #94a3b8;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .nav-item i {
+            width: 24px;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #3b82f6;
+        }
+
+        input, select, button {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            transition: all 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        button {
+            background: #3b82f6;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+
+        th {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .profit {
+            color: #10b981;
+        }
+
+        .loss {
+            color: #ef4444;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+
+        .chart-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 80px;
+                padding: 1rem 0.5rem;
+            }
+            .sidebar .logo, .sidebar .nav-item span {
+                display: none;
+            }
+            .main-content {
+                margin-left: 80px;
+                padding: 1rem;
+            }
+            .nav-item {
+                justify-content: center;
+            }
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+
+        .badge {
+            background: #3b82f6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .form-row {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            margin-bottom: 1rem;
+        }
+
+        .projection-highlight {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 3px solid #10b981;
+        }
+
+        .refresh-indicator {
+            font-size: 0.75rem;
+            color: #10b981;
+            margin-left: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="logo">💰 WealthTrack Pro</div>
+            <nav>
+                <div class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-section="stocks">
+                    <i class="fas fa-chart-simple"></i>
+                    <span>Stocks</span>
+                </div>
+                <div class="nav-item" data-section="mutualfunds">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Mutual Funds</span>
+                </div>
+                <div class="nav-item" data-section="gold">
+                    <i class="fas fa-coins"></i>
+                    <span>Gold & Silver</span>
+                </div>
+                <div class="nav-item" data-section="income">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Income</span>
+                </div>
+                <div class="nav-item" data-section="business">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Business</span>
+                </div>
+                <div class="nav-item" data-section="projection">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Projection</span>
+                </div>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <div class="stats-grid" id="summaryStats"></div>
+                <div class="card">
+                    <h2>Net Worth Distribution</h2>
+                    <div class="chart-container">
+                        <canvas id="netWorthChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Recent SIP Transactions</h2>
+                    <div class="table-container">
+                        <table id="recentSIPTable">
+                            <thead><tr><th>Fund Name</th><th>SIP Date</th><th>Amount</th><th>Bank</th><th>Status</th></tr></thead>
+                            <tbody id="recentSIPBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stocks Section -->
+            <div id="stocks" class="section">
+                <div class="card">
+                    <h2>Add Stock Holding <span class="refresh-indicator" id="stockRefreshStatus"><i class="fas fa-sync-alt"></i> Auto-updating from Google Finance</span></h2>
+                    <div class="form-row">
+                        <input type="text" id="stockName" placeholder="Company Name">
+                        <input type="text" id="stockCode" placeholder="NSE Code (e.g., RELIANCE)">
+                        <input type="number" id="stockQty" placeholder="Quantity">
+                        <input type="number" id="stockAvgPrice" placeholder="Average Price">
+                        <button onclick="addStock()">Add Stock</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Stock Portfolio</h2>
+                    <div class="table-container">
+                        <table id="stocksTable">
+                            <thead>
+                                <tr><th>Company</th><th>Qty</th><th>Avg Price</th><th>Current Price</th><th>Invested</th><th>Current Value</th><th>P/L</th><th>P/L %</th><th>Last Updated</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="stocksTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="stats-grid" id="stockSummary" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+
+            <!-- Mutual Funds Section -->
+            <div id="mutualfunds" class="section">
+                <div class="card">
+                    <h2>Add Mutual Fund</h2>
+                    <div class="form-row">
+                        <input type="text" id="mfName" placeholder="Fund Name">
+                        <input type="text" id="mfBankName" placeholder="Bank Name">
+                        <input type="number" id="mfSIP" placeholder="SIP Amount (₹)">
+                        <input type="text" id="mfSIPDate" placeholder="SIP Date (e.g., 5th of every month)">
+                        <input type="number" id="mfInvested" placeholder="Total Invested">
+                        <input type="number" id="mfNAV" placeholder="Current NAV">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="mfStepUpCheckbox"> Enable Step-up
+                        </label>
+                        <input type="number" id="mfStepUp" placeholder="Step-up %" disabled>
+                        <button onclick="addMutualFund()">Add Fund</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Mutual Fund Portfolio</h2>
+                    <div class="table-container">
+                        <table id="mfTable">
+                            <thead><tr><th>Fund Name</th><th>Bank</th><th>SIP Amount</th><th>SIP Date</th><th>Step-up</th><th>Invested</th><th>NAV</th><th>Current Value</th><th>Returns</th><th>Action</th></tr></thead>
+                            <tbody id="mfTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>SIP Transactions History</h2>
+                    <button onclick="addSIPTransaction()" style="margin-bottom: 1rem;">+ Record SIP Payment</button>
+                    <div class="table-container">
+                        <table id="sipTransactionsTable">
+                            <thead><tr><th>Fund Name</th><th>Date</th><th>Amount</th><th>Bank</th><th>Transaction ID</th><th>Action</th></tr></thead>
+                            <tbody id="sipTransactionsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gold & Silver -->
+            <div id="gold" class="section">
+                <div class="card">
+                    <h2>Add Precious Metal</h2>
+                    <div class="form-row">
+                        <select id="metalType">
+                            <option value="Gold">Gold</option>
+                            <option value="Silver">Silver</option>
+                        </select>
+                        <input type="number" id="metalRate" placeholder="Rate per gram (₹)">
+                        <input type="number" id="metalHolding" placeholder="Holding (grams)">
+                        <input type="number" id="metalAmount" placeholder="OR Total Amount (₹)">
+                        <input type="text" id="metalBank" placeholder="Bank Name">
+                        <input type="date" id="metalPurchaseDate" placeholder="Purchase Date">
+                        <button onclick="addMetal()">Add Metal</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Precious Metals Portfolio</h2>
+                    <div class="table-container">
+                        <table id="metalTable">
+                            <thead><tr><th>Asset Type</th><th>Rate/gram</th><th>Holding (g)</th><th>Total Value</th><th>Bank</th><th>Purchase Date</th><th>Action</th></tr></thead>
+                            <tbody id="metalTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income Section -->
+            <div id="income" class="section">
+                <div class="card">
+                    <h2>Income Tracking</h2>
+                    <div class="form-row">
+                        <input type="text" id="incomeCategory" placeholder="Category (Tuition/Business/School)">
+                        <input type="number" id="incomeAmount" placeholder="Monthly Income (₹)">
+                        <input type="text" id="incomeBank" placeholder="Bank Name">
+                        <button onclick="addIncome()">Add Income</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Income Summary</h2>
+                    <div class="table-container">
+                        <table id="incomeTable">
+                            <thead><tr><th>Category</th><th>Monthly Income</th><th>Bank</th><th>Contribution %</th><th>Action</th></tr></thead>
+                            <tbody id="incomeTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="stat-card" id="totalIncomeDisplay"></div>
+                </div>
+            </div>
+
+            <!-- Business Section -->
+            <div id="business" class="section">
+                <div class="card">
+                    <h2>Business Tracker</h2>
+                    <div class="form-row">
+                        <input type="text" id="businessName" placeholder="Business Name">
+                        <input type="number" id="businessInvestment" placeholder="Investment (₹)">
+                        <input type="number" id="businessTarget" placeholder="Target (₹)">
+                        <input type="number" id="businessProfit" placeholder="Profit (₹)">
+                        <input type="text" id="businessBank" placeholder="Bank Name">
+                        <button onclick="addBusiness()">Add Business</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <h2>Business Portfolio</h2>
+                    <div class="table-container">
+                        <table id="businessTable">
+                            <thead><tr><th>Business</th><th>Investment</th><th>Target</th><th>Profit</th><th>Achievement %</th><th>Bank</th><th>Action</th></tr></thead>
+                            <tbody id="businessTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projection Section - Year from 2026 -->
+            <div id="projection" class="section">
+                <div class="card">
+                    <h2>📈 Future Wealth Projection (Based on Your Actual Assets)</h2>
+                    <div class="stats-grid" id="currentAssetSummary"></div>
+                </div>
+                
+                <div class="card">
+                    <h2>Projection Parameters</h2>
+                    <div class="stats-grid" id="projectionParams">
+                        <div class="stat-card">
+                            <div class="stat-label">Expected Return (Equity)</div>
+                            <div class="stat-value" id="equityReturnDisplay">12%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Expected Return (MF)</div>
+                            <div class="stat-value" id="mfReturnDisplay">10%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Expected Return (Metals)</div>
+                            <div class="stat-value" id="metalReturnDisplay">8%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Business Growth</div>
+                            <div class="stat-value" id="businessGrowthDisplay">15%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Year-by-Year Wealth Projection (2026 - 2055)</h2>
+                    <div class="table-container">
+                        <table id="projectionTable">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Stocks Value</th>
+                                    <th>MF Value</th>
+                                    <th>Metals Value</th>
+                                    <th>Business Value</th>
+                                    <th>Total Wealth</th>
+                                    <th>Milestone</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projectionTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data store
+        let stocksData = [];
+        let mutualFundsData = [];
+        let metalsData = [];
+        let incomeData = [];
+        let businessesData = [];
+        let sipTransactions = [];
+
+        let netWorthChart = null;
+
+        // Google Apps Script Web App URL (Replace with your deployed URL)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+
+        // Enable/disable step-up field based on checkbox
+        document.getElementById('mfStepUpCheckbox')?.addEventListener('change', function(e) {
+            const stepUpField = document.getElementById('mfStepUp');
+            if (stepUpField) {
+                stepUpField.disabled = !e.target.checked;
+                if (!e.target.checked) stepUpField.value = '';
+            }
+        });
+
+        // Fetch stock prices
+        async function fetchStockPrice(symbol) {
+            try {
+                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS`);
+                const data = await response.json();
+                if (data.chart && data.chart.result && data.chart.result[0]) {
+                    const meta = data.chart.result[0].meta;
+                    return {
+                        price: meta.regularMarketPrice,
+                        change: meta.regularMarketChange,
+                        changePercent: meta.regularMarketChangePercent,
+                        timestamp: new Date().toISOString()
+                    };
+                }
+                return null;
+            } catch (error) {
+                console.error('Error fetching price:', error);
+                return null;
+            }
+        }
+
+        // Update all stock prices
+        async function updateAllStockPrices() {
+            const refreshStatus = document.getElementById('stockRefreshStatus');
+            if (refreshStatus) {
+                refreshStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Updating prices...';
+            }
+
+            let updatedCount = 0;
+            for (let stock of stocksData) {
+                const result = await fetchStockPrice(stock.code);
+                if (result && result.price) {
+                    stock.currentPrice = result.price;
+                    stock.currentValue = stock.quantity * result.price;
+                    stock.profitLoss = stock.currentValue - stock.investedValue;
+                    stock.profitLossPercent = (stock.profitLoss / stock.investedValue) * 100;
+                    stock.lastUpdated = result.timestamp;
+                    updatedCount++;
+                }
+            }
+            
+            if (updatedCount > 0) {
+                renderStocks();
+                updateDashboard();
+                saveToGoogleSheets();
+            }
+
+            if (refreshStatus) {
+                refreshStatus.innerHTML = `<i class="fas fa-check-circle"></i> Updated ${updatedCount} stocks at ${new Date().toLocaleTimeString()}`;
+                setTimeout(() => {
+                    refreshStatus.innerHTML = '<i class="fas fa-sync-alt"></i> Auto-updating from Google Finance';
+                }, 3000);
+            }
+        }
+
+        // Calculate current assets
+        function calculateCurrentAssets() {
+            const stocksValue = stocksData.reduce((sum, s) => sum + (s.currentValue || 0), 0);
+            const mfValue = mutualFundsData.reduce((sum, mf) => sum + (mf.currentValue || 0), 0);
+            const metalsValue = metalsData.reduce((sum, m) => sum + (m.totalValue || 0), 0);
+            const businessValue = businessesData.reduce((sum, b) => sum + (b.profit || 0), 0);
+            const monthlyIncome = incomeData.reduce((sum, i) => sum + (i.amount || 0), 0);
+            
+            return { stocksValue, mfValue, metalsValue, businessValue, monthlyIncome, totalAssets: stocksValue + mfValue + metalsValue + businessValue };
+        }
+
+        // Format Indian numbers
+        function formatIndianNumber(num) {
+            if (num >= 10000000) return (num / 10000000).toFixed(2) + ' Cr';
+            if (num >= 100000) return (num / 100000).toFixed(2) + ' L';
+            return num.toFixed(2);
+        }
+
+        // Future Projection from 2026
+        function calculateRealisticProjection() {
+            const assets = calculateCurrentAssets();
+            
+            const equityReturn = 0.12; // 12% fixed
+            const mfReturn = 0.10; // 10% fixed
+            const metalReturn = 0.08; // 8% fixed
+            const businessGrowth = 0.15; // 15% fixed
+            const monthlySavings = assets.monthlyIncome * 0.4;
+            const annualSavings = monthlySavings * 12;
+
+            let stocksValue = assets.stocksValue;
+            let mfValue = assets.mfValue;
+            let metalsValue = assets.metalsValue;
+            let businessIncome = assets.businessValue;
+
+            const tbody = document.getElementById('projectionTableBody');
+            tbody.innerHTML = '';
+
+            const milestones = [10000000, 50000000, 100000000, 500000000, 1000000000];
+            const milestoneNames = ['₹1 Cr', '₹5 Cr', '₹10 Cr', '₹50 Cr', '₹100 Cr'];
+            const startYear = 2026;
+
+            for (let year = 0; year < 30; year++) {
+                stocksValue = stocksValue * (1 + equityReturn) + (annualSavings * 0.4);
+                mfValue = mfValue * (1 + mfReturn) + (annualSavings * 0.3);
+                metalsValue = metalsValue * (1 + metalReturn) + (annualSavings * 0.1);
+                businessIncome = businessIncome * (1 + businessGrowth);
+                
+                const totalWealth = stocksValue + mfValue + metalsValue + businessIncome;
+                
+                let milestone = '';
+                for (let i = 0; i < milestones.length; i++) {
+                    if (totalWealth >= milestones[i] && totalWealth - (annualSavings * (1 + equityReturn)) < milestones[i]) {
+                        milestone = `🎉 ${milestoneNames[i]} Achieved!`;
+                        break;
+                    }
+                }
+
+                const row = tbody.insertRow();
+                if (milestone) row.classList.add('projection-highlight');
+                row.innerHTML = `
+                    <td><strong>${startYear + year}</strong></td>
+                    <td class="profit">₹${formatIndianNumber(stocksValue)}</td>
+                    <td class="profit">₹${formatIndianNumber(mfValue)}</td>
+                    <td class="profit">₹${formatIndianNumber(metalsValue)}</td>
+                    <td class="profit">₹${formatIndianNumber(businessIncome)}</td>
+                    <td class="profit"><strong>₹${formatIndianNumber(totalWealth)}</strong></td>
+                    <td class="profit">${milestone || '-'}</td>
+                `;
+            }
+        }
+
+        // Add Stock
+        async function addStock() {
+            const name = document.getElementById('stockName').value;
+            const code = document.getElementById('stockCode').value.toUpperCase();
+            const quantity = parseFloat(document.getElementById('stockQty').value);
+            const avgPrice = parseFloat(document.getElementById('stockAvgPrice').value);
+
+            if (!name || !code || !quantity || !avgPrice) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const result = await fetchStockPrice(code);
+            const currentPrice = result ? result.price : avgPrice;
+            const investedValue = quantity * avgPrice;
+            const currentValue = quantity * currentPrice;
+            const profitLoss = currentValue - investedValue;
+            const profitLossPercent = (profitLoss / investedValue) * 100;
+
+            stocksData.push({
+                id: Date.now(),
+                name, code, quantity, avgPrice,
+                currentPrice: currentPrice,
+                investedValue, currentValue, profitLoss, profitLossPercent,
+                lastUpdated: result ? result.timestamp : new Date().toISOString()
+            });
+
+            document.getElementById('stockName').value = '';
+            document.getElementById('stockCode').value = '';
+            document.getElementById('stockQty').value = '';
+            document.getElementById('stockAvgPrice').value = '';
+            
+            renderStocks();
+            updateDashboard();
+            saveToGoogleSheets();
+        }
+
+        // Add Mutual Fund
+        function addMutualFund() {
+            const name = document.getElementById('mfName').value;
+            const bankName = document.getElementById('mfBankName').value;
+            const sip = parseFloat(document.getElementById('mfSIP').value);
+            const sipDate = document.getElementById('mfSIPDate').value;
+            const invested = parseFloat(document.getElementById('mfInvested').value);
+            const nav = parseFloat(document.getElementById('mfNAV').value);
+            const stepUpEnabled = document.getElementById('mfStepUpCheckbox').checked;
+            const stepUp = stepUpEnabled ? parseFloat(document.getElementById('mfStepUp').value) : 0;
+
+            if (!name || !sip || !invested || !nav) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            const units = invested / nav;
+            const currentValue = units * nav;
+            const returns = currentValue - invested;
+
+            mutualFundsData.push({
+                id: Date.now(),
+                name, bankName, sip, sipDate, stepUp: stepUpEnabled ? stepUp : 0,
+                invested, nav, units, currentValue, returns
+            });
+
+            document.getElementById('mfName').value = '';
+            document.getElementById('mfBankName').value = '';
+            document.getElementById('mfSIP').value = '';
+            document.getElementById('mfSIPDate').value = '';
+            document.getElementById('mfInvested').value = '';
+            document.getElementById('mfNAV').value = '';
+            document.getElementById('mfStepUpCheckbox').checked = false;
+            document.getElementById('mfStepUp').value = '';
+            document.getElementById('mfStepUp').disabled = true;
+            
+            renderMutualFunds();
+            updateDashboard();
+            saveToGoogleSheets();
+        }
+
+        // Add SIP Transaction
+        function addSIPTransaction() {
+            if (mutualFundsData.length === 0) {
+                alert('Please add a mutual fund first');
+                return;
+            }
+
+            const fundName = prompt('Enter Fund Name:');
+            const fund = mutualFundsData.find(mf => mf.name === fundName);
+            if (!fund) {
+                alert('Fund not found!');
+                return;
+            }
+
+            const amount = parseFloat(prompt('Enter SIP Amount (₹):', fund.sip));
+            const transactionId = 'SIP' + Date.now();
+            const today = new Date().toISOString().split('T')[0];
+
+            sipTransactions.push({
+                id: Date.now(),
+                fundName: fund.name,
+                date: today,
+                amount: amount,
+                bank: fund.bankName,
+                transactionId: transactionId
+            });
+
+            fund.invested += amount;
+            fund.currentValue = (fund.invested / fund.nav) * fund.nav;
+            fund.returns = fund.currentValue - fund.invested;
+
+            renderSIPTransactions();
+            renderMutualFunds();
+            updateDashboard();
+            saveToGoogleSheets();
+            alert(`SIP Transaction Recorded!\nTransaction ID: ${transactionId}`);
+        }
+
+        // Add Metal
+        function addMetal() {
+            const type = document.getElementById('metalType').value;
+            const rate = parseFloat(document.getElementById('metalRate').value);
+            const holding = parseFloat(document.getElementById('metalHolding').value);
+            const amount = parseFloat(document.getElementById('metalAmount').value);
+            const bank = document.getElementById('metalBank').value || 'Cash';
+            const purchaseDate = document.getElementById('metalPurchaseDate').value || new Date().toISOString().split('T')[0];
+
+            let totalValue = 0;
+            if (amount && amount > 0) {
+                totalValue = amount;
+            } else if (rate && holding) {
+                totalValue = rate * holding;
+            } else {
+                alert('Please enter either Holding (grams) + Rate OR Total Amount');
+                return;
+            }
+
+            metalsData.push({
+                id: Date.now(),
+                type, rate: rate || 0, holding: holding || 0, 
+                totalValue, bank, purchaseDate
+            });
+
+            document.getElementById('metalRate').value = '';
+            document.getElementById('metalHolding').value = '';
+            document.getElementById('metalAmount').value = '';
+            document.getElementById('metalBank').value = '';
+            document.getElementById('metalPurchaseDate').value = '';
+            
+            renderMetals();
+            updateDashboard();
+            saveToGoogleSheets();
+        }
+
+        // Add Income
+        function addIncome() {
+            const category = document.getElementById('incomeCategory').value;
+            const amount = parseFloat(document.getElementById('incomeAmount').value);
+            const bank = document.getElementById('incomeBank').value;
+
+            if (!category || !amount) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            incomeData.push({
+                id: Date.now(),
+                category, amount, bank: bank || 'Not Specified'
+            });
+
+            document.getElementById('incomeCategory').value = '';
+            document.getElementById('incomeAmount').value = '';
+            document.getElementById('incomeBank').value = '';
+            
+            renderIncome();
+            updateDashboard();
+            saveToGoogleSheets();
+        }
+
+        // Add Business
+        function addBusiness() {
+            const name = document.getElementById('businessName').value;
+            const investment = parseFloat(document.getElementById('businessInvestment').value);
+            const target = parseFloat(document.getElementById('businessTarget').value);
+            const profit = parseFloat(document.getElementById('businessProfit').value);
+            const bank = document.getElementById('businessBank').value;
+
+            if (!name || !investment || !target) {
+                alert('Please fill required fields');
+                return;
+            }
+
+            const achievement = (profit / target) * 100;
+
+            businessesData.push({
+                id: Date.now(),
+                name, investment, target, profit: profit || 0, 
+                achievement, bank: bank || 'Not Specified'
+            });
+
+            document.getElementById('businessName').value = '';
+            document.getElementById('businessInvestment').value = '';
+            document.getElementById('businessTarget').value = '';
+            document.getElementById('businessProfit').value = '';
+            document.getElementById('businessBank').value = '';
+            
+            renderBusiness();
+            updateDashboard();
+            saveToGoogleSheets();
+        }
+
+        // Render Functions
+        function renderStocks() {
+            const tbody = document.getElementById('stocksTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            let totalInvested = 0, totalCurrent = 0, totalProfit = 0;
+
+            stocksData.forEach(stock => {
+                totalInvested += stock.investedValue;
+                totalCurrent += stock.currentValue;
+                totalProfit += stock.profitLoss;
+
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td><strong>${stock.name}</strong><br><small>${stock.code}</small></td>
+                    <td>${stock.quantity}</td>
+                    <td>₹${stock.avgPrice.toFixed(2)}</td>
+                    <td class="${stock.profitLoss >= 0 ? 'profit' : 'loss'}">₹${stock.currentPrice?.toFixed(2) || 'N/A'}</td>
+                    <td>₹${stock.investedValue.toFixed(2)}</td>
+                    <td class="${stock.profitLoss >= 0 ? 'profit' : 'loss'}">₹${stock.currentValue.toFixed(2)}</td>
+                    <td class="${stock.profitLoss >= 0 ? 'profit' : 'loss'}">₹${stock.profitLoss.toFixed(2)}</td>
+                    <td class="${stock.profitLossPercent >= 0 ? 'profit' : 'loss'}">${stock.profitLossPercent.toFixed(2)}%</td>
+                    <td><small>${stock.lastUpdated ? new Date(stock.lastUpdated).toLocaleTimeString() : 'N/A'}</small></td>
+                    <td><button onclick="deleteStock(${stock.id})" class="btn-danger"><i class="fas fa-trash"></i></button></td>
+                `;
+            });
+
+            const stockSummaryDiv = document.getElementById('stockSummary');
+            if (stockSummaryDiv) {
+                stockSummaryDiv.innerHTML = `
+                    <div class="stat-card"><div class="stat-label">Total Invested</div><div class="stat-value">₹${totalInvested.toFixed(2)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Total Current Value</div><div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">₹${totalCurrent.toFixed(2)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Total Profit/Loss</div><div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">₹${totalProfit.toFixed(2)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Profit %</div><div class="stat-value ${totalProfit >= 0 ? 'profit' : 'loss'}">${totalInvested > 0 ? ((totalProfit/totalInvested)*100).toFixed(2) : 0}%</div></div>
+                `;
+            }
+        }
+
+        function renderMutualFunds() {
+            const tbody = document.getElementById('mfTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            mutualFundsData.forEach(mf => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${mf.name}</td>
+                    <td>${mf.bankName || 'N/A'}</td>
+                    <td>₹${mf.sip.toFixed(2)}</td>
+                    <td>${mf.sipDate || 'Not Set'}</td>
+                    <td>${mf.stepUp > 0 ? mf.stepUp + '%' : 'N/A'}</td>
+                    <td>₹${mf.invested.toFixed(2)}</td>
+                    <td>₹${mf.nav.toFixed(2)}</td>
+                    <td class="${mf.returns >= 0 ? 'profit' : 'loss'}">₹${mf.currentValue.toFixed(2)}</td>
+                    <td class="${mf.returns >= 0 ? 'profit' : 'loss'}">₹${mf.returns.toFixed(2)}</td>
+                    <td><button onclick="deleteMF(${mf.id})" class="btn-danger"><i class="fas fa-trash"></i></button></td>
+                `;
+            });
+        }
+
+        function renderSIPTransactions() {
+            const tbody = document.getElementById('sipTransactionsBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            sipTransactions.forEach(transaction => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${transaction.fundName}</td>
+                    <td>${transaction.date}</td>
+                    <td>₹${transaction.amount.toFixed(2)}</td>
+                    <td>${transaction.bank}</td>
+                    <td><span class="badge">${transaction.transactionId}</span></td>
+                    <td><button onclick="deleteSIPTransaction(${transaction.id})" class="btn-danger"><i class="fas fa-trash"></i></button></td>
+                `;
+            });
+
+            const recentBody = document.getElementById('recentSIPBody');
+            if (recentBody) {
+                recentBody.innerHTML = '';
+                sipTransactions.slice(-5).reverse().forEach(transaction => {
+                    const row = recentBody.insertRow();
+                    row.innerHTML = `
+                        <td>${transaction.fundName}</td>
+                        <td>${transaction.date}</td>
+                        <td>₹${transaction.amount.toFixed(2)}</td>
+                        <td>${transaction.bank}</td>
+                        <td><span class="badge">Completed</span></td>
+                    `;
+                });
+            }
+        }
+
+        function renderMetals() {
+            const tbody = document.getElementById('metalTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            metalsData.forEach(metal => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${metal.type}</td>
+                    <td>₹${metal.rate.toFixed(2)}</td>
+                    <td>${metal.holding.toFixed(2)}g</td>
+                    <td class="profit">₹${metal.totalValue.toFixed(2)}</td>
+                    <td>${metal.bank || 'Cash'}</td>
+                    <td>${metal.purchaseDate || 'N/A'}</td>
+                    <td><button onclick="deleteMetal(${metal.id})" class="btn-danger"><i class="fas fa-trash"></i></button>
+                `;
+            });
+        }
+
+        function renderIncome() {
+            const tbody = document.getElementById('incomeTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            const total = incomeData.reduce((sum, inc) => sum + inc.amount, 0);
+
+            incomeData.forEach(inc => {
+                const percentage = total > 0 ? (inc.amount / total) * 100 : 0;
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${inc.category}</td>
+                    <td>₹${inc.amount.toFixed(2)}</td>
+                    <td>${inc.bank || 'N/A'}</td>
+                    <td>${percentage.toFixed(2)}%</td>
+                    <td><button onclick="deleteIncome(${inc.id})" class="btn-danger"><i class="fas fa-trash"></i></button>
+                `;
+            });
+
+            const totalIncomeDiv = document.getElementById('totalIncomeDisplay');
+            if (totalIncomeDiv) {
+                totalIncomeDiv.innerHTML = `<div class="stat-label">Total Monthly Income</div><div class="stat-value">₹${total.toFixed(2)}</div>`;
+            }
+        }
+
+        function renderBusiness() {
+            const tbody = document.getElementById('businessTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            businessesData.forEach(biz => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${biz.name}</td>
+                    <td>₹${biz.investment.toFixed(2)}</td>
+                    <td>₹${biz.target.toFixed(2)}</td>
+                    <td class="${biz.profit >= 0 ? 'profit' : 'loss'}">₹${biz.profit.toFixed(2)}</td>
+                    <td>${biz.achievement.toFixed(2)}%</td>
+                    <td>${biz.bank || 'N/A'}</td>
+                    <td><button onclick="deleteBusiness(${biz.id})" class="btn-danger"><i class="fas fa-trash"></i></button>
+                `;
+            });
+        }
+
+        function updateDashboard() {
+            const assets = calculateCurrentAssets();
+            
+            const summaryStats = document.getElementById('summaryStats');
+            if (summaryStats) {
+                summaryStats.innerHTML = `
+                    <div class="stat-card"><div class="stat-label">Equity Value</div><div class="stat-value">₹${formatIndianNumber(assets.stocksValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">MF Value</div><div class="stat-value">₹${formatIndianNumber(assets.mfValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Gold & Silver</div><div class="stat-value">₹${formatIndianNumber(assets.metalsValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Business Value</div><div class="stat-value">₹${formatIndianNumber(assets.businessValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Monthly Income</div><div class="stat-value">₹${formatIndianNumber(assets.monthlyIncome)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Total Net Worth</div><div class="stat-value">₹${formatIndianNumber(assets.totalAssets)}</div></div>
+                `;
+            }
+
+            const currentAssetSummary = document.getElementById('currentAssetSummary');
+            if (currentAssetSummary) {
+                currentAssetSummary.innerHTML = `
+                    <div class="stat-card"><div class="stat-label">Current Stocks Value</div><div class="stat-value">₹${formatIndianNumber(assets.stocksValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Current MF Value</div><div class="stat-value">₹${formatIndianNumber(assets.mfValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Current Metals Value</div><div class="stat-value">₹${formatIndianNumber(assets.metalsValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Business Annual Profit</div><div class="stat-value">₹${formatIndianNumber(assets.businessValue)}</div></div>
+                    <div class="stat-card"><div class="stat-label">Monthly Savings Capacity</div><div class="stat-value">₹${formatIndianNumber(assets.monthlyIncome * 0.4)}</div></div>
+                `;
+            }
+
+            const chartCanvas = document.getElementById('netWorthChart');
+            if (chartCanvas) {
+                if (netWorthChart) netWorthChart.destroy();
+                const ctx = chartCanvas.getContext('2d');
+                netWorthChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Equity', 'Mutual Funds', 'Gold & Silver', 'Business'],
+                        datasets: [{
+                            data: [assets.stocksValue, assets.mfValue, assets.metalsValue, assets.businessValue],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#e2e8f0' } } } }
+                });
+            }
+        }
+
+        // Delete functions
+        function deleteStock(id) { stocksData = stocksData.filter(s => s.id !== id); renderStocks(); updateDashboard(); saveToGoogleSheets(); }
+        function deleteMF(id) { mutualFundsData = mutualFundsData.filter(m => m.id !== id); renderMutualFunds(); updateDashboard(); saveToGoogleSheets(); }
+        function deleteMetal(id) { metalsData = metalsData.filter(m => m.id !== id); renderMetals(); updateDashboard(); saveToGoogleSheets(); }
+        function deleteIncome(id) { incomeData = incomeData.filter(i => i.id !== id); renderIncome(); updateDashboard(); saveToGoogleSheets(); }
+        function deleteBusiness(id) { businessesData = businessesData.filter(b => b.id !== id); renderBusiness(); updateDashboard(); saveToGoogleSheets(); }
+        function deleteSIPTransaction(id) { 
+            const transaction = sipTransactions.find(t => t.id === id);
+            if (transaction) {
+                const fund = mutualFundsData.find(mf => mf.name === transaction.fundName);
+                if (fund) {
+                    fund.invested -= transaction.amount;
+                    fund.currentValue = (fund.invested / fund.nav) * fund.nav;
+                    fund.returns = fund.currentValue - fund.invested;
+                }
+                sipTransactions = sipTransactions.filter(t => t.id !== id);
+                renderMutualFunds();
+                renderSIPTransactions();
+                updateDashboard();
+                saveToGoogleSheets();
+            }
+        }
+
+        // Google Sheets Integration
+        async function saveToGoogleSheets() {
+            const allData = { stocksData, mutualFundsData, metalsData, incomeData, businessesData, sipTransactions };
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(allData)
+                });
+            } catch (error) {
+                console.error('Save error:', error);
+            }
+        }
+
+        async function loadFromGoogleSheets() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                if (data) {
+                    stocksData = data.stocksData || [];
+                    mutualFundsData = data.mutualFundsData || [];
+                    metalsData = data.metalsData || [];
+                    incomeData = data.incomeData || [];
+                    businessesData = data.businessesData || [];
+                    sipTransactions = data.sipTransactions || [];
+                    renderStocks();
+                    renderMutualFunds();
+                    renderMetals();
+                    renderIncome();
+                    renderBusiness();
+                    renderSIPTransactions();
+                    updateDashboard();
+                    calculateRealisticProjection();
+                }
+            } catch (error) {
+                console.error('Load error:', error);
+            }
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+                const section = item.dataset.section;
+                document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+                const activeSection = document.getElementById(section);
+                if (activeSection) activeSection.classList.add('active');
+                if (section === 'projection') calculateRealisticProjection();
+            });
+        });
+
+        // Auto-refresh stock prices every 30 seconds
+        setInterval(() => {
+            if (stocksData.length > 0) updateAllStockPrices();
+        }, 30000);
+
+        // Initial load
+        loadFromGoogleSheets();
+        setTimeout(() => {
+            if (stocksData.length > 0) updateAllStockPrices();
+            calculateRealisticProjection();
+        }, 1000);
+    </script>
+</body>
+</html>
