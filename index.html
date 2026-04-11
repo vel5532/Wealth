@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Smart Investor | AI Powered by Your SIP Data</title>
+    <title>Smart Investor | Complete Investment Suite</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -80,6 +80,8 @@
         .button-group { display: flex; gap: 0.4rem; margin-top: 0.4rem; }
         .cmp-source { font-size: 0.6rem; color: #10b981; margin-top: 0.2rem; }
         .current-sip-info { background: rgba(16, 185, 129, 0.15); padding: 0.5rem; border-radius: 0.5rem; margin-bottom: 0.5rem; }
+        .setting-group { margin-bottom: 1rem; }
+        .setting-group label { display: block; margin-bottom: 0.3rem; font-size: 0.75rem; color: #94a3b8; }
     </style>
 </head>
 <body>
@@ -87,7 +89,7 @@
         <div class="logo"><i class="fas fa-brain"></i><span>Smart Investor</span></div>
         <div class="header-actions">
             <span id="dataStatus" class="data-status"><i class="fas fa-database"></i> Auto-saved</span>
-            <button class="settings-btn" onclick="openSettings()"><i class="fas fa-cog"></i></button>
+            <button class="settings-btn" onclick="openSettingsModal()"><i class="fas fa-cog"></i></button>
             <button class="refresh-btn" onclick="refreshAllData()"><i class="fas fa-sync-alt"></i></button>
         </div>
     </div>
@@ -134,7 +136,7 @@
             <div class="card"><h2><i class="fas fa-plus"></i> Add Stock</h2>
                 <div class="form-grid"><input type="text" id="stockName" placeholder="Company Name"><input type="text" id="stockCode" placeholder="NSE Code"><input type="number" id="stockQty" placeholder="Quantity"><input type="number" id="stockAvgPrice" placeholder="Avg Price (₹)"></div>
                 <button onclick="addStock()">Add Stock</button>
-                <div class="cmp-source"><i class="fas fa-google"></i> CMP via Google Finance: =GOOGLEFINANCE("NSE:"&symbol,"price")</div>
+                <div class="cmp-source"><i class="fas fa-google"></i> CMP via Google Finance</div>
             </div>
             <div class="card"><h2><i class="fas fa-chart-simple"></i> Stock Portfolio <button onclick="refreshAllCMP()" style="width:auto;padding:0.2rem 0.5rem;"><i class="fas fa-sync-alt"></i> Refresh CMP</button></h2>
                 <div class="table-container"><table id="stocksTable"><thead><tr><th>Company</th><th>Qty</th><th>Avg</th><th>CMP</th><th>Invested</th><th>Current</th><th>P/L</th><th>P/L%</th><th>Action</th></tr></thead><tbody id="stocksTableBody"></tbody></table></div>
@@ -163,7 +165,7 @@
                 <button onclick="addBond()">Add Bond</button>
             </div>
             <div class="card"><h2><i class="fas fa-file-invoice-dollar"></i> Bond Portfolio</h2>
-                <div class="table-container"><table id="bondTable"><thead><tr><th>Name</th><th>Qty</th><th>Purchase</th><th>Face Value</th><th>Coupon %</th><th>Annual Interest</th><th>Action</th></tr></thead><tbody id="bondTableBody"></tbody></table></div>
+                <div class="table-container"><table id="bondTable"><thead><tr><th>Name</th><th>Qty</th><th>Purchase</th><th>Face Value</th><th>Coupon %</th><th>Annual Interest</th><th>Action</th></tr></thead><tbody id="bondTableBody"></tbody></td></div>
                 <div class="stats-grid" id="bondSummary"></div>
             </div>
         </div>
@@ -192,30 +194,17 @@
             </div>
         </div>
 
-        <!-- AI Advisor - Uses Your Real SIP Data -->
+        <!-- AI Advisor -->
         <div id="advisor" class="section">
-            <div class="card current-sip-info" id="currentSIPSummary">
-                <h2><i class="fas fa-chart-line"></i> 📊 Your Current SIP Portfolio</h2>
-                <div id="realSIPData"></div>
-            </div>
-            <div class="card ai-card">
-                <h2><i class="fas fa-robot"></i> AI Investment Advisor</h2>
-                <div id="aiAdvice"></div>
-            </div>
-            <div class="card">
-                <h2><i class="fas fa-lightbulb"></i> Smart Suggestions Based on Your SIPs</h2>
-                <div id="smartSuggestions"></div>
-            </div>
-            <div class="card">
-                <h2><i class="fas fa-chart-line"></i> Your SIP Wealth Projection</h2>
-                <div class="chart-container"><canvas id="wealthChartAI"></canvas></div>
-            </div>
+            <div class="card current-sip-info"><h2><i class="fas fa-chart-line"></i> 📊 Your Current SIP Portfolio</h2><div id="realSIPData"></div></div>
+            <div class="card ai-card"><h2><i class="fas fa-robot"></i> AI Investment Advisor</h2><div id="aiAdvice"></div></div>
+            <div class="card"><h2><i class="fas fa-lightbulb"></i> Smart Suggestions Based on Your SIPs</h2><div id="smartSuggestions"></div></div>
+            <div class="card"><h2><i class="fas fa-chart-line"></i> Your SIP Wealth Projection</h2><div class="chart-container"><canvas id="wealthChartAI"></canvas></div></div>
         </div>
 
         <!-- SIP Calculator -->
         <div id="calculator" class="section">
             <div class="card"><h2><i class="fas fa-sliders-h"></i> What-If Scenario Planner</h2>
-                <div class="instruction-text">Try different SIP amounts to see future wealth</div>
                 <div class="form-grid">
                     <div><label>Monthly SIP (₹)</label><input type="number" id="calcMonthlySIP" placeholder="Enter amount"></div>
                     <div><label>Yearly Increment (%)</label><input type="number" id="calcYearlyIncrement" value="10"></div>
@@ -234,7 +223,7 @@
         <div id="matrix" class="section">
             <div class="card"><h2><i class="fas fa-th-large"></i> Future Value Matrix</h2>
                 <div class="instruction-text">📊 Color: 🔵 1Cr+ | 🟢 5Cr+ | 🔴 10Cr+</div>
-                <div class="table-container"><table id="matrixTable"><thead id="matrixHeader"></thead><tbody id="matrixBody"></tbody></tr></div>
+                <div class="table-container"><table id="matrixTable"><thead id="matrixHeader"></thead><tbody id="matrixBody"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -242,56 +231,153 @@
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header"><h3><i class="fas fa-cog"></i> Settings</h3><button class="close-modal" onclick="closeSettings()">&times;</button></div>
+            <div class="modal-header"><h3><i class="fas fa-cog"></i> Settings</h3><button class="close-modal" onclick="closeSettingsModal()">&times;</button></div>
+            
             <div class="setting-group">
-                <label><i class="fas fa-bell"></i> SIP Reminder Settings</label>
-                <div class="form-grid"><input type="number" id="reminderDays" value="3"><label><input type="checkbox" id="notificationsEnabled"> Notifications</label></div>
-                <button onclick="saveSIPSettings()" class="btn-success">Save</button>
+                <label><i class="fas fa-bell"></i> 🔔 SIP Reminder Settings</label>
+                <div class="form-grid">
+                    <input type="number" id="reminderDays" value="3">
+                    <label class="checkbox-label"><input type="checkbox" id="notificationsEnabled"> Enable Notifications</label>
+                </div>
+                <button onclick="saveSIPSettings()" class="btn-success">Save Reminder Settings</button>
             </div>
+            
             <div class="setting-group">
-                <label><i class="fas fa-database"></i> Data Backup</label>
-                <div class="button-group"><button onclick="backupToLocal()" class="btn-success">Save Backup</button><button onclick="restoreFromLocal()" class="btn-warning">Restore</button></div>
+                <label><i class="fas fa-cloud-upload-alt"></i> ☁️ Google Sheets Backup</label>
+                <input type="text" id="googleScriptUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <div class="button-group">
+                    <button onclick="testGoogleScript()" class="btn-warning">🔗 Test Connection</button>
+                    <button onclick="saveGoogleScriptUrl()" class="btn-success">💾 Save URL</button>
+                </div>
+                <div class="button-group">
+                    <button onclick="syncToGoogleSheets()" class="btn-success"><i class="fas fa-upload"></i> Upload to Sheets</button>
+                    <button onclick="syncFromGoogleSheets()" class="btn-warning"><i class="fas fa-download"></i> Download from Sheets</button>
+                </div>
+                <div id="googleSheetsStatus" class="instruction-text" style="margin-top:0.3rem;"></div>
+            </div>
+            
+            <div class="setting-group">
+                <label><i class="fas fa-database"></i> 💾 Local Data Management</label>
+                <div class="button-group">
+                    <button onclick="backupToLocal()" class="btn-success">📥 Save Backup</button>
+                    <button onclick="restoreFromLocal()" class="btn-warning">📤 Restore Backup</button>
+                    <button onclick="exportData()" class="btn-info">📎 Export JSON</button>
+                </div>
+                <div id="localStatus" class="instruction-text"></div>
+            </div>
+            
+            <div class="setting-group">
+                <label><i class="fas fa-info-circle"></i> ℹ️ Storage Info</label>
+                <div id="storageInfo" class="instruction-text"></div>
             </div>
         </div>
     </div>
 
     <script>
         // ==================== DATA STORES ====================
-        let sipsData = [], stocksData = [], mutualFundsData = [], bondsData = [], metalsData = [], loansData = [], sipTransactions = [];
-        let sipFilter = 'All', reminderDays = 3, notificationsEnabled = false;
-        let netWorthChart = null, wealthChartAI = null;
+        let sipsData = [];
+        let stocksData = [];
+        let mutualFundsData = [];
+        let bondsData = [];
+        let metalsData = [];
+        let loansData = [];
+        let sipTransactions = [];
+        let sipFilter = 'All';
+        let reminderDays = 3;
+        let notificationsEnabled = false;
+        let netWorthChart = null;
+        let wealthChartAI = null;
         let calcData = [];
+        let googleScriptUrl = '';
 
-        // ==================== GOOGLE FINANCE CMP FUNCTION ====================
+        // ==================== LOAD SAVED DATA ON STARTUP ====================
+        function loadAllData() {
+            const saved = localStorage.getItem('smartinvestor_complete_data');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    sipsData = data.sipsData || [];
+                    stocksData = data.stocksData || [];
+                    mutualFundsData = data.mutualFundsData || [];
+                    bondsData = data.bondsData || [];
+                    metalsData = data.metalsData || [];
+                    loansData = data.loansData || [];
+                    sipTransactions = data.sipTransactions || [];
+                    if (data.reminderDays) reminderDays = data.reminderDays;
+                    if (data.notificationsEnabled) notificationsEnabled = data.notificationsEnabled;
+                    if (data.googleScriptUrl) googleScriptUrl = data.googleScriptUrl;
+                    
+                    // Load calculator inputs
+                    if (data.calcInputs) {
+                        document.getElementById('calcMonthlySIP').value = data.calcInputs.monthlySIP || '';
+                        document.getElementById('calcYearlyIncrement').value = data.calcInputs.yearlyIncrement || 10;
+                        document.getElementById('calcExpectedReturn').value = data.calcInputs.expectedReturn || 12;
+                        document.getElementById('calcDuration').value = data.calcInputs.duration || 20;
+                        document.getElementById('calcUserAge').value = data.calcInputs.userAge || 30;
+                    }
+                    
+                    refreshSIPsStatus();
+                    return true;
+                } catch(e) { console.log('Error loading data:', e); }
+            }
+            return false;
+        }
+
+        function saveAllData() {
+            const allData = {
+                sipsData: sipsData,
+                stocksData: stocksData,
+                mutualFundsData: mutualFundsData,
+                bondsData: bondsData,
+                metalsData: metalsData,
+                loansData: loansData,
+                sipTransactions: sipTransactions,
+                reminderDays: reminderDays,
+                notificationsEnabled: notificationsEnabled,
+                googleScriptUrl: googleScriptUrl,
+                calcInputs: {
+                    monthlySIP: document.getElementById('calcMonthlySIP').value,
+                    yearlyIncrement: document.getElementById('calcYearlyIncrement').value,
+                    expectedReturn: document.getElementById('calcExpectedReturn').value,
+                    duration: document.getElementById('calcDuration').value,
+                    userAge: document.getElementById('calcUserAge').value
+                },
+                lastSaved: new Date().toISOString()
+            };
+            localStorage.setItem('smartinvestor_complete_data', JSON.stringify(allData));
+            updateStorageInfo();
+            document.getElementById('dataStatus').innerHTML = '<i class="fas fa-database"></i> Saved';
+            setTimeout(() => document.getElementById('dataStatus').innerHTML = '<i class="fas fa-database"></i> Auto-saved', 2000);
+        }
+
+        function updateStorageInfo() {
+            const saved = localStorage.getItem('smartinvestor_complete_data');
+            if (saved) {
+                const size = Math.round(JSON.stringify(saved).length / 1024);
+                document.getElementById('storageInfo').innerHTML = `💾 Data size: ${size} KB | SIPs: ${sipsData.length} | Stocks: ${stocksData.length}`;
+            } else {
+                document.getElementById('storageInfo').innerHTML = 'No data saved yet';
+            }
+        }
+
+        // ==================== GOOGLE FINANCE CMP ====================
         async function fetchGoogleFinanceCMP(symbol) {
             try {
                 const cleanSymbol = symbol.toUpperCase().trim();
-                const proxyUrl = 'https://api.allorigins.win/raw?url=';
-                const googleFinanceUrl = `https://www.google.com/finance/quote/${cleanSymbol}:NSE`;
-                try {
-                    const response = await fetch(proxyUrl + encodeURIComponent(googleFinanceUrl));
-                    const html = await response.text();
-                    const priceMatch = html.match(/\"price\":\"?([0-9,.]+)\"?/);
-                    if (priceMatch && priceMatch[1]) {
-                        const price = parseFloat(priceMatch[1].replace(/,/g, ''));
-                        if (!isNaN(price) && price > 0) return { price: price, success: true, source: 'Google Finance' };
-                    }
-                } catch (e) {}
-                
                 const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}.NS`;
-                const yahooResponse = await fetch(yahooUrl);
-                const yahooData = await yahooResponse.json();
-                if (yahooData.chart?.result?.[0]?.meta?.regularMarketPrice) {
-                    return { price: yahooData.chart.result[0].meta.regularMarketPrice, success: true, source: 'Yahoo Finance' };
+                const response = await fetch(yahooUrl);
+                const data = await response.json();
+                if (data.chart?.result?.[0]?.meta?.regularMarketPrice) {
+                    return { price: data.chart.result[0].meta.regularMarketPrice, success: true };
                 }
-                return { price: null, success: false, source: 'Failed' };
+                return { price: null, success: false };
             } catch (error) {
-                return { price: null, success: false, source: 'Error' };
+                return { price: null, success: false };
             }
         }
 
         async function refreshAllCMP() {
-            showToast('🔄 Fetching live CMP from Google Finance...');
+            showToast('🔄 Fetching live prices...');
             let updated = 0;
             for (let stock of stocksData) {
                 const result = await fetchGoogleFinanceCMP(stock.code);
@@ -305,80 +391,8 @@
             }
             renderStocks();
             updateDashboard();
-            saveToLocalStorage();
+            saveAllData();
             showToast(`✅ Updated ${updated} stocks`);
-        }
-
-        // ==================== GET TOTAL MONTHLY SIP FROM USER'S DATA ====================
-        function getTotalMonthlySIP() {
-            return sipsData.reduce((total, sip) => total + sip.amount, 0);
-        }
-
-        function getSIPDetails() {
-            const totalSIP = getTotalMonthlySIP();
-            const activeSIPs = sipsData.filter(s => s.status !== 'Completed').length;
-            const dueSoonCount = sipsData.filter(s => s.status === 'Due Soon').length;
-            const topSIP = sipsData.length > 0 ? [...sipsData].sort((a,b) => b.amount - a.amount)[0] : null;
-            return { totalSIP, activeSIPs, dueSoonCount, topSIP, sipCount: sipsData.length };
-        }
-
-        // ==================== AI ADVISOR USING REAL SIP DATA ====================
-        function generateAIAdviceFromRealSIPs() {
-            const sipDetails = getSIPDetails();
-            const totalMonthlySIP = sipDetails.totalSIP;
-            const yearlyIncrement = 10; // Default assumption
-            const expectedReturn = 12; // Default assumption
-            const years = 20; // Default projection
-            const userAge = parseInt(document.getElementById('calcUserAge').value) || 30;
-            
-            // Calculate future wealth based on user's actual SIP
-            let calculation = [];
-            let totalInvested = 0;
-            let currentSIP = totalMonthlySIP * 12;
-            let totalValue = 0;
-            
-            for (let year = 1; year <= years; year++) {
-                totalInvested += currentSIP;
-                let growthEarned = totalValue * (expectedReturn / 100);
-                totalValue = totalValue + currentSIP + growthEarned;
-                calculation.push({ year, totalValue: totalValue, crores: totalValue/10000000 });
-                currentSIP = currentSIP * (1 + yearlyIncrement / 100);
-            }
-            
-            const finalWealth = totalValue;
-            const yearTo1Cr = calculation.find(c => c.totalValue >= 10000000)?.year || 'Not reached';
-            
-            // Determine risk profile based on age
-            let riskProfile = userAge <= 30 ? 'Aggressive' : (userAge <= 45 ? 'Moderate' : 'Conservative');
-            let riskColor = userAge <= 30 ? 'badge-aggressive' : (userAge <= 45 ? 'badge-moderate' : 'badge-conservative');
-            
-            // Generate suggestions based on actual SIP data
-            let suggestions = [];
-            
-            if (totalMonthlySIP === 0) {
-                suggestions.push("📌 You haven't added any SIPs yet. Add your first SIP to get personalized AI advice!");
-            } else {
-                suggestions.push(`💰 Your current monthly SIP total is ₹${totalMonthlySIP.toLocaleString()}. Great start!`);
-                
-                if (finalWealth < 10000000) {
-                    const requiredIncrease = Math.ceil((10000000 - finalWealth) / years / 12);
-                    suggestions.push(`🎯 To reach ₹1 Cr in ${years} years, consider increasing your monthly SIP by ₹${requiredIncrease.toLocaleString()}`);
-                } else {
-                    suggestions.push(`🏆 Congratulations! With your current SIPs, you'll reach ₹1 Cr in Year ${yearTo1Cr}`);
-                }
-                
-                if (sipDetails.sipCount > 3) {
-                    suggestions.push(`📊 You have ${sipDetails.sipCount} active SIPs. Consider diversifying across different fund categories.`);
-                }
-                
-                if (sipDetails.dueSoonCount > 0) {
-                    suggestions.push(`⚠️ You have ${sipDetails.dueSoonCount} SIPs due soon. Don't forget to mark them as paid!`);
-                }
-                
-                suggestions.push(`📈 With ${expectedReturn}% expected returns, your ₹${totalMonthlySIP.toLocaleString()}/month SIP could grow to ₹${(finalWealth/10000000).toFixed(2)} Cr in ${years} years.`);
-            }
-            
-            return { finalWealth, yearTo1Cr, riskProfile, riskColor, suggestions, totalMonthlySIP, sipCount: sipDetails.sipCount, calculation };
         }
 
         // ==================== SIP FUNCTIONS ====================
@@ -393,117 +407,400 @@
             next.setDate(Math.min(day,lastDay));
             return next.toISOString().split('T')[0];
         }
-        function getSIPStatus(due){ const diff=Math.ceil((new Date(due)-new Date())/86400000); if(diff<0) return'Completed'; if(diff<=reminderDays) return'Due Soon'; return'Upcoming'; }
-        function refreshSIPsStatus(){ sipsData=sipsData.map(s=>({...s,nextDueDate:calculateNextDueDate(s.sipDate,s.lastPaidDate||null),status:getSIPStatus(calculateNextDueDate(s.sipDate,s.lastPaidDate||null))})); }
         
-        function addSIP(){ const name=document.getElementById('sipFundName').value, amt=parseFloat(document.getElementById('sipAmount').value), day=parseInt(document.getElementById('sipDate').value); if(!name||!amt||!day||day<1||day>31){showToast('Fill all fields');return;} const due=calculateNextDueDate(day,null); sipsData.push({id:generateId(),fundName:name,amount:amt,sipDate:day,lastPaidDate:null,nextDueDate:due,status:getSIPStatus(due),createdAt:new Date().toISOString()}); document.getElementById('sipFundName').value=''; document.getElementById('sipAmount').value=''; document.getElementById('sipDate').value=''; renderSIPs(); updateDashboard(); updateAIAdvisor(); saveToLocalStorage(); showToast(`SIP for ${name} added!`); }
-        function deleteSIP(id){ if(confirm('Delete this SIP?')){ sipsData=sipsData.filter(s=>s.id!==id); renderSIPs(); updateDashboard(); updateAIAdvisor(); saveToLocalStorage(); showToast('SIP deleted'); } }
-        function markSIPPaid(id){ sipsData=sipsData.map(s=>s.id===id?{...s,lastPaidDate:new Date().toISOString()}:s); refreshSIPsStatus(); renderSIPs(); updateDashboard(); updateAIAdvisor(); saveToLocalStorage(); showToast('Marked as paid!'); }
+        function getSIPStatus(due){ const diff=Math.ceil((new Date(due)-new Date())/86400000); if(diff<0) return'Completed'; if(diff<=reminderDays) return'Due Soon'; return'Upcoming'; }
+        
+        function refreshSIPsStatus(){ 
+            sipsData = sipsData.map(s=>({...s,nextDueDate:calculateNextDueDate(s.sipDate,s.lastPaidDate||null),status:getSIPStatus(calculateNextDueDate(s.sipDate,s.lastPaidDate||null))})); 
+        }
+        
+        function addSIP(){ 
+            const name=document.getElementById('sipFundName').value; 
+            const amt=parseFloat(document.getElementById('sipAmount').value); 
+            const day=parseInt(document.getElementById('sipDate').value); 
+            if(!name||!amt||!day||day<1||day>31){showToast('Fill all fields');return;} 
+            const due=calculateNextDueDate(day,null); 
+            sipsData.push({id:generateId(),fundName:name,amount:amt,sipDate:day,lastPaidDate:null,nextDueDate:due,status:getSIPStatus(due),createdAt:new Date().toISOString()}); 
+            document.getElementById('sipFundName').value=''; 
+            document.getElementById('sipAmount').value=''; 
+            document.getElementById('sipDate').value=''; 
+            renderSIPs(); 
+            updateDashboard(); 
+            updateAIAdvisor(); 
+            saveAllData(); 
+            showToast(`SIP for ${name} added!`); 
+        }
+        
+        function deleteSIP(id){ 
+            if(confirm('Delete this SIP?')){ 
+                sipsData=sipsData.filter(s=>s.id!==id); 
+                renderSIPs(); 
+                updateDashboard(); 
+                updateAIAdvisor(); 
+                saveAllData(); 
+                showToast('SIP deleted'); 
+            } 
+        }
+        
+        function markSIPPaid(id){ 
+            sipsData=sipsData.map(s=>s.id===id?{...s,lastPaidDate:new Date().toISOString()}:s); 
+            refreshSIPsStatus(); 
+            renderSIPs(); 
+            updateDashboard(); 
+            updateAIAdvisor(); 
+            saveAllData(); 
+            showToast('Marked as paid!'); 
+        }
+        
         function filterSIPs(f){ sipFilter=f; renderSIPs(); }
         
-        function renderSIPs(){ const tbody=document.getElementById('sipTableBody'); if(!tbody)return; let filtered=sipFilter==='All'?sipsData:sipsData.filter(s=>s.status===sipFilter); tbody.innerHTML=''; let total=0; filtered.forEach(s=>{ total+=s.amount; tbody.innerHTML+=`<tr><td><strong>${s.fundName}</strong></td><td>₹${s.amount.toLocaleString()}</td><td>${s.sipDate}</td><td>${new Date(s.nextDueDate).toLocaleDateString()}</td><td class="${s.status==='Due Soon'?'warning':''}">${s.status}</td><td class="action-buttons">${s.status!=='Completed'?`<button onclick="markSIPPaid('${s.id}')" class="btn-success" style="padding:0.2rem 0.4rem;"><i class="fas fa-check"></i></button>`:''}<button onclick="deleteSIP('${s.id}')" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); document.getElementById('sipSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Monthly SIP</div><div class="stat-value">₹${(total/1000).toFixed(1)}k</div></div><div class="stat-card"><div class="stat-label">Active SIPs</div><div class="stat-value">${sipsData.length}</div></div>`; const rem=document.getElementById('sipRemindersList'); if(rem){ const due=sipsData.filter(s=>s.status==='Due Soon'); rem.innerHTML=due.length===0?'<div class="stat-card">No SIPs due soon! 🎉</div>':due.map(s=>`<div class="stat-card due-soon"><div class="stat-label">${s.fundName}</div><div class="stat-value warning">₹${s.amount.toLocaleString()} due on ${new Date(s.nextDueDate).toLocaleDateString()}</div></div>`).join(''); } }
+        function renderSIPs(){ 
+            const tbody=document.getElementById('sipTableBody'); 
+            if(!tbody)return; 
+            let filtered=sipFilter==='All'?sipsData:sipsData.filter(s=>s.status===sipFilter); 
+            tbody.innerHTML=''; 
+            let total=0; 
+            filtered.forEach(s=>{ 
+                total+=s.amount; 
+                tbody.innerHTML+=`<tr>
+                    <td><strong>${s.fundName}</strong></td>
+                    <td>₹${s.amount.toLocaleString()}</td>
+                    <td>${s.sipDate}</td>
+                    <td>${new Date(s.nextDueDate).toLocaleDateString()}</td>
+                    <td class="${s.status==='Due Soon'?'warning':''}">${s.status}</td>
+                    <td class="action-buttons">
+                        ${s.status!=='Completed'?`<button onclick="markSIPPaid('${s.id}')" class="btn-success" style="padding:0.2rem 0.4rem;"><i class="fas fa-check"></i></button>`:''}
+                        <button onclick="deleteSIP('${s.id}')" class="delete-btn"><i class="fas fa-trash"></i></button>
+                    </td>
+                </table>`;
+            }); 
+            document.getElementById('sipSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Monthly SIP</div><div class="stat-value">₹${(total/1000).toFixed(1)}k</div></div><div class="stat-card"><div class="stat-label">Active SIPs</div><div class="stat-value">${sipsData.length}</div></div>`; 
+            const rem=document.getElementById('sipRemindersList'); 
+            if(rem){ 
+                const due=sipsData.filter(s=>s.status==='Due Soon'); 
+                rem.innerHTML=due.length===0?'<div class="stat-card">No SIPs due soon! 🎉</div>':due.map(s=>`<div class="stat-card due-soon"><div class="stat-label">${s.fundName}</div><div class="stat-value warning">₹${s.amount.toLocaleString()} due on ${new Date(s.nextDueDate).toLocaleDateString()}</div></div>`).join(''); 
+            } 
+        }
 
         // ==================== STOCK FUNCTIONS ====================
-        async function addStock(){ const name=document.getElementById('stockName').value, code=document.getElementById('stockCode').value.toUpperCase(), qty=parseFloat(document.getElementById('stockQty').value), price=parseFloat(document.getElementById('stockAvgPrice').value); if(!name||!code||!qty||!price){showToast('Fill all fields');return;} const cmpResult = await fetchGoogleFinanceCMP(code); const investedValue = qty * price; stocksData.push({id:Date.now(),name,code,quantity:qty,avgPrice:price,currentPrice:cmpResult.success?cmpResult.price:null,investedValue:investedValue,currentValue:cmpResult.success?qty*cmpResult.price:null,profitLoss:cmpResult.success?qty*cmpResult.price-investedValue:null,profitLossPercent:cmpResult.success?((qty*cmpResult.price-investedValue)/investedValue*100):null}); renderStocks(); updateDashboard(); saveToLocalStorage(); showToast(`${name} added!`); }
-        function deleteStock(id){ stocksData=stocksData.filter(s=>s.id!==id); renderStocks(); updateDashboard(); saveToLocalStorage(); showToast('Stock deleted'); }
-        function renderStocks(){ const t=document.getElementById('stocksTableBody'); if(!t)return; t.innerHTML=''; let inv=0,cur=0; stocksData.forEach(s=>{ inv+=s.investedValue; if(s.currentValue)cur+=s.currentValue; t.innerHTML+=`<tr><td><strong>${s.name}</strong><br><small>${s.code}</small></td><td>${s.quantity}</td><td>₹${s.avgPrice.toFixed(2)}</td><td>${s.currentPrice?`₹${s.currentPrice.toFixed(2)}`:'-'}</td><td>₹${s.investedValue.toFixed(2)}</td><td>${s.currentValue?`₹${s.currentValue.toFixed(2)}`:'-'}</td><td class="${s.profitLoss>=0?'profit':'loss'}">${s.profitLoss?(s.profitLoss>=0?'+':'')+`₹${s.profitLoss.toFixed(2)}`:'-'}</td><td class="${s.profitLoss>=0?'profit':'loss'}">${s.profitLossPercent?`${s.profitLossPercent.toFixed(2)}%`:'-'}</td><td><button onclick="deleteStock(${s.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); document.getElementById('stockSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Invested</div><div class="stat-value">₹${(inv/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Current</div><div class="stat-value">${cur?`₹${(cur/100000).toFixed(2)}L`:'-'}</div></div>`; }
+        async function addStock(){ 
+            const name=document.getElementById('stockName').value; 
+            const code=document.getElementById('stockCode').value.toUpperCase(); 
+            const qty=parseFloat(document.getElementById('stockQty').value); 
+            const price=parseFloat(document.getElementById('stockAvgPrice').value); 
+            if(!name||!code||!qty||!price){showToast('Fill all fields');return;} 
+            const cmpResult = await fetchGoogleFinanceCMP(code); 
+            const investedValue = qty * price; 
+            stocksData.push({
+                id:Date.now(), name, code, quantity:qty, avgPrice:price,
+                currentPrice:cmpResult.success?cmpResult.price:null,
+                investedValue:investedValue,
+                currentValue:cmpResult.success?qty*cmpResult.price:null,
+                profitLoss:cmpResult.success?qty*cmpResult.price-investedValue:null,
+                profitLossPercent:cmpResult.success?((qty*cmpResult.price-investedValue)/investedValue*100):null
+            }); 
+            renderStocks(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`${name} added!`); 
+        }
+        
+        function deleteStock(id){ stocksData=stocksData.filter(s=>s.id!==id); renderStocks(); updateDashboard(); saveAllData(); showToast('Stock deleted'); }
+        
+        function renderStocks(){ 
+            const t=document.getElementById('stocksTableBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            let inv=0,cur=0; 
+            stocksData.forEach(s=>{ 
+                inv+=s.investedValue; 
+                if(s.currentValue)cur+=s.currentValue; 
+                t.innerHTML+=`<tr>
+                    <td><strong>${s.name}</strong><br><small>${s.code}</small></td>
+                    <td>${s.quantity}</td>
+                    <td>₹${s.avgPrice.toFixed(2)}</td>
+                    <td class="${s.currentPrice?(s.profitLoss>=0?'profit':'loss'):'warning'}">${s.currentPrice?`₹${s.currentPrice.toFixed(2)}`:'Fetching...'}</td>
+                    <td>₹${s.investedValue.toFixed(2)}</td>
+                    <td class="${s.currentValue?(s.profitLoss>=0?'profit':'loss'):''}">${s.currentValue?`₹${s.currentValue.toFixed(2)}`:'-'}</td>
+                    <td class="${s.profitLoss>=0?'profit':'loss'}">${s.profitLoss?(s.profitLoss>=0?'+':'')+`₹${s.profitLoss.toFixed(2)}`:'-'}</td>
+                    <td class="${s.profitLossPercent>=0?'profit':'loss'}">${s.profitLossPercent?`${s.profitLossPercent.toFixed(2)}%`:'-'}</td>
+                    <td><button onclick="deleteStock(${s.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+            document.getElementById('stockSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Invested</div><div class="stat-value">₹${(inv/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Current</div><div class="stat-value">${cur?`₹${(cur/100000).toFixed(2)}L`:'-'}</div></div>`; 
+        }
 
-        // ==================== OTHER INVESTMENT FUNCTIONS ====================
-        function addMutualFund(){ const name=document.getElementById('mfName').value, sip=parseFloat(document.getElementById('mfSIP').value), inv=parseFloat(document.getElementById('mfInvested').value), nav=parseFloat(document.getElementById('mfNAV').value); if(!name||!sip||!inv||!nav){showToast('Fill fields');return;} mutualFundsData.push({id:Date.now(),name,sip,invested:inv,nav,units:inv/nav,currentValue:inv,returns:0}); renderMutualFunds(); updateDashboard(); saveToLocalStorage(); showToast(`${name} added!`); }
-        function deleteMF(id){ mutualFundsData=mutualFundsData.filter(m=>m.id!==id); renderMutualFunds(); updateDashboard(); saveToLocalStorage(); showToast('MF deleted'); }
-        function renderMutualFunds(){ const t=document.getElementById('mfTableBody'); if(!t)return; t.innerHTML=''; mutualFundsData.forEach(m=>{ t.innerHTML+=`<tr><td>${m.name}</td><td>₹${m.sip.toFixed(0)}</td><td>₹${m.invested.toFixed(0)}</td><td>₹${m.currentValue.toFixed(0)}</td><td>0%</td><td><button onclick="deleteMF(${m.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); }
-        function addSIPTransaction(){ if(mutualFundsData.length===0){showToast('Add MF first');return;} const name=prompt('Fund name:'); const f=mutualFundsData.find(m=>m.name===name); if(!f){showToast('Not found');return;} const amt=parseFloat(prompt('Amount:',f.sip)); if(!amt)return; sipTransactions.push({id:Date.now(),fundName:f.name,date:new Date().toISOString().split('T')[0],amount:amt}); f.invested+=amt; f.currentValue=f.invested; renderMutualFunds(); renderSIPTransactions(); updateDashboard(); saveToLocalStorage(); showToast(`SIP recorded!`); }
-        function renderSIPTransactions(){ const t=document.getElementById('sipTransactionsBody'); if(!t)return; t.innerHTML=''; sipTransactions.slice(-10).reverse().forEach(tx=>{ t.innerHTML+=`<tr><td>${tx.fundName}</td><td>${tx.date}</td><td>₹${tx.amount.toFixed(0)}</td><td><button onclick="deleteSIPTransaction(${tx.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); const recent=document.getElementById('recentSIPBody'); if(recent){ recent.innerHTML=''; sipTransactions.slice(-5).reverse().forEach(tx=>{ recent.innerHTML+=`<tr><td>${tx.fundName}</td><td>${tx.date}</td><td>₹${tx.amount.toFixed(0)}</td></tr>`; }); } }
-        function deleteSIPTransaction(id){ sipTransactions=sipTransactions.filter(t=>t.id!==id); renderSIPTransactions(); saveToLocalStorage(); showToast('Deleted'); }
+        // ==================== OTHER FUNCTIONS ====================
+        function addMutualFund(){ 
+            const name=document.getElementById('mfName').value; 
+            const sip=parseFloat(document.getElementById('mfSIP').value); 
+            const inv=parseFloat(document.getElementById('mfInvested').value); 
+            const nav=parseFloat(document.getElementById('mfNAV').value); 
+            if(!name||!sip||!inv||!nav){showToast('Fill fields');return;} 
+            mutualFundsData.push({id:Date.now(),name,sip,invested:inv,nav,units:inv/nav,currentValue:inv,returns:0}); 
+            renderMutualFunds(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`${name} added!`); 
+        }
         
-        function addBond(){ const name=document.getElementById('bondName').value, type=document.getElementById('bondType').value, qty=parseFloat(document.getElementById('bondQuantity').value), pp=parseFloat(document.getElementById('bondPurchasePrice').value), fv=parseFloat(document.getElementById('bondFaceValue').value), cr=parseFloat(document.getElementById('bondCouponRate').value); if(!name||!qty||!pp||!fv||!cr){showToast('Fill fields');return;} bondsData.push({id:Date.now(),name,type,quantity:qty,purchasePrice:pp,faceValue:fv,couponRate:cr,totalInvestment:qty*pp,annualInterest:(qty*fv*cr)/100}); renderBonds(); updateDashboard(); saveToLocalStorage(); showToast(`${name} added!`); }
-        function deleteBond(id){ bondsData=bondsData.filter(b=>b.id!==id); renderBonds(); updateDashboard(); saveToLocalStorage(); showToast('Bond deleted'); }
-        function renderBonds(){ const t=document.getElementById('bondTableBody'); if(!t)return; t.innerHTML=''; bondsData.forEach(b=>{ t.innerHTML+=`<tr><td>${b.name}<br><small>${b.type}</small></td><td>${b.quantity}</td><td>₹${b.purchasePrice.toFixed(2)}</td><td>₹${b.faceValue.toFixed(2)}</td><td>${b.couponRate}%</td><td class="profit">₹${b.annualInterest.toFixed(2)}</td><td><button onclick="deleteBond(${b.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        function deleteMF(id){ mutualFundsData=mutualFundsData.filter(m=>m.id!==id); renderMutualFunds(); updateDashboard(); saveAllData(); showToast('MF deleted'); }
         
-        function addMetal(){ const type=document.getElementById('metalType').value, rate=parseFloat(document.getElementById('metalRate').value), hold=parseFloat(document.getElementById('metalHolding').value), amt=parseFloat(document.getElementById('metalAmount').value); let val=amt||(rate*hold); if(!val){showToast('Enter value');return;} metalsData.push({id:Date.now(),type,rate:rate||0,holding:hold||0,totalValue:val}); renderMetals(); updateDashboard(); saveToLocalStorage(); showToast(`${type} added!`); }
-        function deleteMetal(id){ metalsData=metalsData.filter(m=>m.id!==id); renderMetals(); updateDashboard(); saveToLocalStorage(); showToast('Metal deleted'); }
-        function renderMetals(){ const t=document.getElementById('metalTableBody'); if(!t)return; t.innerHTML=''; metalsData.forEach(m=>{ t.innerHTML+=`<tr><td>${m.type}</td><td>${m.holding.toFixed(2)}g</td><td class="profit">₹${(m.totalValue/1000).toFixed(1)}k</td><td><button onclick="deleteMetal(${m.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); }
+        function renderMutualFunds(){ 
+            const t=document.getElementById('mfTableBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            mutualFundsData.forEach(m=>{ 
+                t.innerHTML+=`<tr>
+                    <td>${m.name}</td>
+                    <td>₹${m.sip.toFixed(0)}</td>
+                    <td>₹${m.invested.toFixed(0)}</td>
+                    <td>₹${m.currentValue.toFixed(0)}</td>
+                    <td>0%</td>
+                    <td><button onclick="deleteMF(${m.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+        }
+        
+        function addSIPTransaction(){ 
+            if(mutualFundsData.length===0){showToast('Add MF first');return;} 
+            const name=prompt('Fund name:'); 
+            const f=mutualFundsData.find(m=>m.name===name); 
+            if(!f){showToast('Not found');return;} 
+            const amt=parseFloat(prompt('Amount:',f.sip)); 
+            if(!amt)return; 
+            sipTransactions.push({id:Date.now(),fundName:f.name,date:new Date().toISOString().split('T')[0],amount:amt}); 
+            f.invested+=amt; 
+            f.currentValue=f.invested; 
+            renderMutualFunds(); 
+            renderSIPTransactions(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`SIP recorded!`); 
+        }
+        
+        function renderSIPTransactions(){ 
+            const t=document.getElementById('sipTransactionsBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            sipTransactions.slice(-10).reverse().forEach(tx=>{ 
+                t.innerHTML+=`<tr>
+                    <td>${tx.fundName}</td>
+                    <td>${tx.date}</td>
+                    <td>₹${tx.amount.toFixed(0)}</td>
+                    <td><button onclick="deleteSIPTransaction(${tx.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+            const recent=document.getElementById('recentSIPBody'); 
+            if(recent){ 
+                recent.innerHTML=''; 
+                sipTransactions.slice(-5).reverse().forEach(tx=>{ 
+                    recent.innerHTML+=`<tr>
+                        <td>${tx.fundName}</td>
+                        <td>${tx.date}</td>
+                        <td>₹${tx.amount.toFixed(0)}</td>
+                    </tr>`;
+                }); 
+            } 
+        }
+        
+        function deleteSIPTransaction(id){ sipTransactions=sipTransactions.filter(t=>t.id!==id); renderSIPTransactions(); saveAllData(); showToast('Deleted'); }
+        
+        function addBond(){ 
+            const name=document.getElementById('bondName').value; 
+            const type=document.getElementById('bondType').value; 
+            const qty=parseFloat(document.getElementById('bondQuantity').value); 
+            const pp=parseFloat(document.getElementById('bondPurchasePrice').value); 
+            const fv=parseFloat(document.getElementById('bondFaceValue').value); 
+            const cr=parseFloat(document.getElementById('bondCouponRate').value); 
+            if(!name||!qty||!pp||!fv||!cr){showToast('Fill fields');return;} 
+            bondsData.push({id:Date.now(),name,type,quantity:qty,purchasePrice:pp,faceValue:fv,couponRate:cr,totalInvestment:qty*pp,annualInterest:(qty*fv*cr)/100}); 
+            renderBonds(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`${name} added!`); 
+        }
+        
+        function deleteBond(id){ bondsData=bondsData.filter(b=>b.id!==id); renderBonds(); updateDashboard(); saveAllData(); showToast('Bond deleted'); }
+        
+        function renderBonds(){ 
+            const t=document.getElementById('bondTableBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            bondsData.forEach(b=>{ 
+                t.innerHTML+=`<tr>
+                    <td>${b.name}<br><small>${b.type}</small></td>
+                    <td>${b.quantity}</td>
+                    <td>₹${b.purchasePrice.toFixed(2)}</td>
+                    <td>₹${b.faceValue.toFixed(2)}</td>
+                    <td>${b.couponRate}%</td>
+                    <td class="profit">₹${b.annualInterest.toFixed(2)}</td>
+                    <td><button onclick="deleteBond(${b.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+        }
+        
+        function addMetal(){ 
+            const type=document.getElementById('metalType').value; 
+            const rate=parseFloat(document.getElementById('metalRate').value); 
+            const hold=parseFloat(document.getElementById('metalHolding').value); 
+            const amt=parseFloat(document.getElementById('metalAmount').value); 
+            let val=amt||(rate*hold); 
+            if(!val){showToast('Enter value');return;} 
+            metalsData.push({id:Date.now(),type,rate:rate||0,holding:hold||0,totalValue:val}); 
+            renderMetals(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`${type} added!`); 
+        }
+        
+        function deleteMetal(id){ metalsData=metalsData.filter(m=>m.id!==id); renderMetals(); updateDashboard(); saveAllData(); showToast('Metal deleted'); }
+        
+        function renderMetals(){ 
+            const t=document.getElementById('metalTableBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            metalsData.forEach(m=>{ 
+                t.innerHTML+=`<tr>
+                    <td>${m.type}</td>
+                    <td>${m.holding.toFixed(2)}g</td>
+                    <td class="profit">₹${(m.totalValue/1000).toFixed(1)}k</td>
+                    <td><button onclick="deleteMetal(${m.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+        }
         
         function calcEMI(p,r,t){ const mr=r/12/100, tm=t*12; if(mr===0) return p/tm; return p*mr*Math.pow(1+mr,tm)/(Math.pow(1+mr,tm)-1); }
-        function addLoan(){ const name=document.getElementById('loanName').value, type=document.getElementById('loanType').value, p=parseFloat(document.getElementById('loanPrincipal').value), r=parseFloat(document.getElementById('loanInterestRate').value), t=parseFloat(document.getElementById('loanTenure').value), paid=parseInt(document.getElementById('loanEmiPaid').value)||0; if(!name||!p||!r||!t){showToast('Fill fields');return;} const emi=calcEMI(p,r,t); let bal=p; for(let i=0;i<paid;i++){ bal-=emi-(bal*(r/12/100)); if(bal<0)bal=0; } loansData.push({id:Date.now(),name,type,principal:p,interestRate:r,tenure:t,emi,emiPaid:paid,remainingBalance:bal,paidPercent:((p-bal)/p)*100}); renderLoans(); updateDashboard(); saveToLocalStorage(); showToast(`${name} added!`); }
-        function deleteLoan(id){ loansData=loansData.filter(l=>l.id!==id); renderLoans(); updateDashboard(); saveToLocalStorage(); showToast('Loan deleted'); }
-        function renderLoans(){ const t=document.getElementById('loanTableBody'); if(!t)return; t.innerHTML=''; let totalP=0,totalR=0; loansData.forEach(l=>{ totalP+=l.principal; totalR+=l.remainingBalance; t.innerHTML+=`<tr><td>${l.name}<br><small>${l.type}</small></td><td>₹${(l.principal/100000).toFixed(2)}L</td><td>${l.interestRate}%</td><td>₹${l.emi.toFixed(2)}</td><td class="warning">₹${(l.remainingBalance/100000).toFixed(2)}L</td><td>${l.paidPercent.toFixed(0)}%</td><td><button onclick="deleteLoan(${l.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td></tr>`; }); document.getElementById('loanSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Total Loans</div><div class="stat-value warning">₹${(totalP/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value warning">₹${(totalR/100000).toFixed(2)}L</div></div>`; document.getElementById('loanSummaryDashboard').innerHTML=`<div class="stat-card"><div class="stat-label">Total Loans</div><div class="stat-value warning">₹${(totalP/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value warning">₹${(totalR/100000).toFixed(2)}L</div></div>`; }
-
-        // ==================== UPDATE AI ADVISOR WITH REAL SIP DATA ====================
-        function updateAIAdvisor() {
-            const aiData = generateAIAdviceFromRealSIPs();
-            const sipDetails = getSIPDetails();
-            
-            // Display current SIP summary
-            document.getElementById('realSIPData').innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-label">Total Monthly SIP</div><div class="stat-value profit">₹${sipDetails.totalSIP.toLocaleString()}</div></div>
-                    <div class="stat-card"><div class="stat-label">Active SIPs</div><div class="stat-value">${sipDetails.activeSIPs}</div></div>
-                    <div class="stat-card"><div class="stat-label">Due Soon</div><div class="stat-value warning">${sipDetails.dueSoonCount}</div></div>
-                    <div class="stat-card"><div class="stat-label">Total SIPs</div><div class="stat-value">${sipDetails.sipCount}</div></div>
-                </div>
-                ${sipDetails.topSIP ? `<div class="instruction-text">🏆 Top SIP: ${sipDetails.topSIP.fundName} - ₹${sipDetails.topSIP.amount.toLocaleString()}/month</div>` : '<div class="instruction-text">📌 Add your first SIP to get personalized AI advice!</div>'}
-            `;
-            
-            // Display AI Advice
-            document.getElementById('aiAdvice').innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-label">Risk Profile</div><div class="stat-value"><span class="suggestion-badge ${aiData.riskColor}">${aiData.riskProfile}</span></div></div>
-                    <div class="stat-card"><div class="stat-label">1 Cr Target</div><div class="stat-value">Year ${aiData.yearTo1Cr}</div></div>
-                    <div class="stat-card"><div class="stat-label">Projected Wealth</div><div class="stat-value profit">₹${(aiData.finalWealth/10000000).toFixed(2)}Cr</div></div>
-                </div>
-                <div class="ai-card" style="padding:0.6rem; margin-top:0.5rem; border-radius:0.5rem;">
-                    <p><strong>🎯 Based on your current SIPs:</strong> ₹${aiData.totalMonthlySIP.toLocaleString()}/month</p>
-                    <p><strong>📊 20-year projection:</strong> ₹${(aiData.finalWealth/10000000).toFixed(2)} Crores</p>
-                    <p><strong>🏆 Milestone:</strong> You will reach ₹1 Crore in Year ${aiData.yearTo1Cr}</p>
-                </div>
-            `;
-            
-            // Display Smart Suggestions
-            document.getElementById('smartSuggestions').innerHTML = `
-                <div class="stats-grid">
-                    ${aiData.suggestions.map(s => `<div class="stat-card"><div class="stat-label"><i class="fas fa-lightbulb"></i> Suggestion</div><div class="stat-value" style="font-size:0.65rem;">${s}</div></div>`).join('')}
-                </div>
-            `;
-            
-            // Render wealth chart based on real SIPs
-            renderRealSIPWealthChart(aiData.calculation);
-            
-            // Quick insights for dashboard
-            document.getElementById('quickInsights').innerHTML = `
-                <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-label">AI Says</div><div class="stat-value" style="font-size:0.7rem;">${aiData.suggestions[0] || 'Add SIPs to get AI advice'}</div></div>
-                    <div class="stat-card"><div class="stat-label">Risk Profile</div><div class="stat-value">${aiData.riskProfile}</div></div>
-                </div>
-            `;
+        
+        function addLoan(){ 
+            const name=document.getElementById('loanName').value; 
+            const type=document.getElementById('loanType').value; 
+            const p=parseFloat(document.getElementById('loanPrincipal').value); 
+            const r=parseFloat(document.getElementById('loanInterestRate').value); 
+            const t=parseFloat(document.getElementById('loanTenure').value); 
+            const paid=parseInt(document.getElementById('loanEmiPaid').value)||0; 
+            if(!name||!p||!r||!t){showToast('Fill fields');return;} 
+            const emi=calcEMI(p,r,t); 
+            let bal=p; 
+            for(let i=0;i<paid;i++){ 
+                bal-=emi-(bal*(r/12/100)); 
+                if(bal<0)bal=0; 
+            } 
+            loansData.push({id:Date.now(),name,type,principal:p,interestRate:r,tenure:t,emi,emiPaid:paid,remainingBalance:bal,paidPercent:((p-bal)/p)*100}); 
+            renderLoans(); 
+            updateDashboard(); 
+            saveAllData(); 
+            showToast(`${name} added!`); 
         }
         
-        function renderRealSIPWealthChart(calculation) {
-            const ctx = document.getElementById('wealthChartAI')?.getContext('2d');
-            if(!ctx) return;
-            if(wealthChartAI) wealthChartAI.destroy();
-            if(calculation && calculation.length > 0) {
-                wealthChartAI = new Chart(ctx, { 
-                    type: 'line', 
-                    data: { 
-                        labels: calculation.map(d => d.year), 
-                        datasets: [{ label: 'Your Wealth (Cr)', data: calculation.map(d => d.totalValue/10000000), borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }] 
-                    }, 
-                    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } 
-                });
+        function deleteLoan(id){ loansData=loansData.filter(l=>l.id!==id); renderLoans(); updateDashboard(); saveAllData(); showToast('Loan deleted'); }
+        
+        function renderLoans(){ 
+            const t=document.getElementById('loanTableBody'); 
+            if(!t)return; 
+            t.innerHTML=''; 
+            let totalP=0,totalR=0; 
+            loansData.forEach(l=>{ 
+                totalP+=l.principal; 
+                totalR+=l.remainingBalance; 
+                t.innerHTML+=`<tr>
+                    <td>${l.name}<br><small>${l.type}</small></td>
+                    <td>₹${(l.principal/100000).toFixed(2)}L</td>
+                    <td>${l.interestRate}%</td>
+                    <td>₹${l.emi.toFixed(2)}</td>
+                    <td class="warning">₹${(l.remainingBalance/100000).toFixed(2)}L</td>
+                    <td>${l.paidPercent.toFixed(0)}%</td>
+                    <td><button onclick="deleteLoan(${l.id})" class="delete-btn"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+            }); 
+            document.getElementById('loanSummary').innerHTML=`<div class="stat-card"><div class="stat-label">Total Loans</div><div class="stat-value warning">₹${(totalP/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value warning">₹${(totalR/100000).toFixed(2)}L</div></div>`; 
+            document.getElementById('loanSummaryDashboard').innerHTML=`<div class="stat-card"><div class="stat-label">Total Loans</div><div class="stat-value warning">₹${(totalP/100000).toFixed(2)}L</div></div><div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value warning">₹${(totalR/100000).toFixed(2)}L</div></div>`; 
+        }
+
+        // ==================== AI ADVISOR ====================
+        function getTotalMonthlySIP() { return sipsData.reduce((total, sip) => total + sip.amount, 0); }
+        
+        function updateAIAdvisor() {
+            const totalSIP = getTotalMonthlySIP();
+            const activeSIPs = sipsData.filter(s => s.status !== 'Completed').length;
+            const dueSoonCount = sipsData.filter(s => s.status === 'Due Soon').length;
+            const topSIP = sipsData.length > 0 ? [...sipsData].sort((a,b) => b.amount - a.amount)[0] : null;
+            const userAge = parseInt(document.getElementById('calcUserAge').value) || 30;
+            
+            // Calculate projection
+            let calculation = [];
+            let totalInvested = 0;
+            let currentSIP = totalSIP * 12;
+            let totalValue = 0;
+            const expectedReturn = 12;
+            const years = 20;
+            
+            for (let year = 1; year <= years; year++) {
+                totalInvested += currentSIP;
+                let growthEarned = totalValue * (expectedReturn / 100);
+                totalValue = totalValue + currentSIP + growthEarned;
+                calculation.push({ year, totalValue: totalValue, crores: totalValue/10000000 });
+                currentSIP = currentSIP * 1.1;
+            }
+            
+            const finalWealth = totalValue;
+            const yearTo1Cr = calculation.find(c => c.totalValue >= 10000000)?.year || 'Not reached';
+            let riskProfile = userAge <= 30 ? 'Aggressive' : (userAge <= 45 ? 'Moderate' : 'Conservative');
+            let riskColor = userAge <= 30 ? 'badge-aggressive' : (userAge <= 45 ? 'badge-moderate' : 'badge-conservative');
+            
+            let suggestions = [];
+            if (totalSIP === 0) {
+                suggestions.push("📌 You haven't added any SIPs yet. Add your first SIP to get personalized AI advice!");
             } else {
-                ctx.fillStyle = '#94a3b8';
-                ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                suggestions.push(`💰 Your current monthly SIP total is ₹${totalSIP.toLocaleString()}. Great start!`);
+                if (finalWealth < 10000000) {
+                    const requiredIncrease = Math.ceil((10000000 - finalWealth) / years / 12);
+                    suggestions.push(`🎯 To reach ₹1 Cr in ${years} years, consider increasing your monthly SIP by ₹${requiredIncrease.toLocaleString()}`);
+                } else {
+                    suggestions.push(`🏆 Congratulations! With your current SIPs, you'll reach ₹1 Cr in Year ${yearTo1Cr}`);
+                }
+                if (dueSoonCount > 0) suggestions.push(`⚠️ You have ${dueSoonCount} SIPs due soon. Don't forget to mark them as paid!`);
+            }
+            
+            document.getElementById('realSIPData').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Total Monthly SIP</div><div class="stat-value profit">₹${totalSIP.toLocaleString()}</div></div>
+                    <div class="stat-card"><div class="stat-label">Active SIPs</div><div class="stat-value">${activeSIPs}</div></div>
+                    <div class="stat-card"><div class="stat-label">Due Soon</div><div class="stat-value warning">${dueSoonCount}</div></div>
+                    <div class="stat-card"><div class="stat-label">Total SIPs</div><div class="stat-value">${sipsData.length}</div></div>
+                </div>
+                ${topSIP ? `<div class="instruction-text">🏆 Top SIP: ${topSIP.fundName} - ₹${topSIP.amount.toLocaleString()}/month</div>` : '<div class="instruction-text">📌 Add your first SIP to get personalized AI advice!</div>'}
+            `;
+            
+            document.getElementById('aiAdvice').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">Risk Profile</div><div class="stat-value"><span class="suggestion-badge ${riskColor}">${riskProfile}</span></div></div>
+                    <div class="stat-card"><div class="stat-label">1 Cr Target</div><div class="stat-value">Year ${yearTo1Cr}</div></div>
+                    <div class="stat-card"><div class="stat-label">Projected Wealth</div><div class="stat-value profit">₹${(finalWealth/10000000).toFixed(2)}Cr</div></div>
+                </div>
+                <div class="ai-card" style="padding:0.6rem; margin-top:0.5rem; border-radius:0.5rem;">
+                    <p><strong>🎯 Based on your current SIPs:</strong> ₹${totalSIP.toLocaleString()}/month</p>
+                    <p><strong>📊 20-year projection:</strong> ₹${(finalWealth/10000000).toFixed(2)} Crores</p>
+                    <p><strong>🏆 Milestone:</strong> You will reach ₹1 Crore in Year ${yearTo1Cr}</p>
+                </div>
+            `;
+            
+            document.getElementById('smartSuggestions').innerHTML = `<div class="stats-grid">${suggestions.map(s => `<div class="stat-card"><div class="stat-label"><i class="fas fa-lightbulb"></i> Suggestion</div><div class="stat-value" style="font-size:0.65rem;">${s}</div></div>`).join('')}</div>`;
+            
+            document.getElementById('quickInsights').innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="stat-label">AI Says</div><div class="stat-value" style="font-size:0.7rem;">${suggestions[0] || 'Add SIPs to get AI advice'}</div></div><div class="stat-card"><div class="stat-label">Risk Profile</div><div class="stat-value">${riskProfile}</div></div></div>`;
+            
+            // Render chart
+            const ctx = document.getElementById('wealthChartAI')?.getContext('2d');
+            if(ctx && calculation.length > 0) {
+                if(wealthChartAI) wealthChartAI.destroy();
+                wealthChartAI = new Chart(ctx, { type: 'line', data: { labels: calculation.map(d => d.year), datasets: [{ label: 'Your Wealth (Cr)', data: calculation.map(d => d.totalValue/10000000), borderColor: '#10b981', fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: '#e2e8f0' } } } } });
             }
         }
 
-        // ==================== CALCULATOR FUNCTIONS ====================
+        // ==================== CALCULATOR ====================
         function runCalculator() {
-            const monthlySIP = parseFloat(document.getElementById('calcMonthlySIP').value) || getTotalMonthlySIP();
-            if(monthlySIP === 0) {
-                showToast('Please enter a SIP amount or add SIPs first');
-                return;
-            }
+            const monthlySIP = parseFloat(document.getElementById('calcMonthlySIP').value);
+            if(!monthlySIP || monthlySIP === 0) { showToast('Please enter a SIP amount'); return; }
             const yearlyIncrement = parseFloat(document.getElementById('calcYearlyIncrement').value) / 100;
             const annualReturn = parseFloat(document.getElementById('calcExpectedReturn').value) / 100;
             const years = parseInt(document.getElementById('calcDuration').value);
@@ -520,7 +817,7 @@
             calcData = calculation;
             renderCalcTable();
             renderMatrix();
-            saveToLocalStorage();
+            saveAllData();
         }
 
         function renderCalcTable(){ const t=document.getElementById('calcTableBody'); if(!t)return; t.innerHTML=''; calcData.forEach(d=>{ t.innerHTML+=`<tr><td>${d.year}</td><td>₹${(d.annualSIP/1000).toFixed(0)}k</td><td>₹${(d.totalInvested/100000).toFixed(2)}L</td><td class="profit">₹${(d.growthEarned/100000).toFixed(2)}L</td><td class="profit">₹${(d.totalValue/10000000).toFixed(2)}Cr</td><td>${d.crores.toFixed(2)}</td><td>${d.age}</td></tr>`; }); }
@@ -551,29 +848,144 @@
 
         // ==================== DASHBOARD ====================
         function formatNum(n){ if(!n&&n!==0)return'-'; if(n>=1e7)return (n/1e7).toFixed(2)+'Cr'; if(n>=1e5)return (n/1e5).toFixed(2)+'L'; return n.toFixed(0); }
-        function updateDashboard(){ const assets={ stocksValue:stocksData.reduce((s,i)=>s+(i.currentValue||0),0), mfValue:mutualFundsData.reduce((s,i)=>s+(i.currentValue||0),0), bondsValue:bondsData.reduce((s,i)=>s+(i.totalInvestment||0),0), metalsValue:metalsData.reduce((s,i)=>s+(i.totalValue||0),0), totalLoans:loansData.reduce((s,i)=>s+(i.remainingBalance||0),0), sipTotal:getTotalMonthlySIP() }; const netWorth=assets.stocksValue+assets.mfValue+assets.bondsValue+assets.metalsValue-assets.totalLoans; document.getElementById('summaryStats').innerHTML=`<div class="stat-card"><div class="stat-label">Stocks</div><div class="stat-value">${formatNum(assets.stocksValue)}</div></div><div class="stat-card"><div class="stat-label">MF</div><div class="stat-value">${formatNum(assets.mfValue)}</div></div><div class="stat-card"><div class="stat-label">Bonds</div><div class="stat-value">${formatNum(assets.bondsValue)}</div></div><div class="stat-card"><div class="stat-label">Metals</div><div class="stat-value">${formatNum(assets.metalsValue)}</div></div><div class="stat-card"><div class="stat-label">Monthly SIP</div><div class="stat-value">${formatNum(assets.sipTotal)}</div></div><div class="stat-card"><div class="stat-label">Net Worth</div><div class="stat-value profit">${formatNum(netWorth)}</div></div>`; if(netWorthChart)netWorthChart.destroy(); const ctx=document.getElementById('netWorthChart')?.getContext('2d'); if(ctx){ netWorthChart=new Chart(ctx,{type:'pie',data:{labels:['Stocks','MF','Bonds','Metals'],datasets:[{data:[assets.stocksValue,assets.mfValue,assets.bondsValue,assets.metalsValue],backgroundColor:['#3b82f6','#10b981','#8b5cf6','#f59e0b']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#e2e8f0',font:{size:9}}}}}}); } }
-
-        // ==================== PERSISTENCE ====================
-        function saveToLocalStorage(){ const allData={sipsData,stocksData,mutualFundsData,bondsData,metalsData,loansData,sipTransactions,calcInputs:{monthlySIP:document.getElementById('calcMonthlySIP').value,yearlyIncrement:document.getElementById('calcYearlyIncrement').value,expectedReturn:document.getElementById('calcExpectedReturn').value,duration:document.getElementById('calcDuration').value,userAge:document.getElementById('calcUserAge').value}}; localStorage.setItem('smartinvestor_data',JSON.stringify(allData)); document.getElementById('dataStatus').innerHTML='<i class="fas fa-database"></i> Saved'; setTimeout(()=>document.getElementById('dataStatus').innerHTML='<i class="fas fa-database"></i> Auto-saved',2000); }
-        function loadFromLocalStorage(){ const saved=localStorage.getItem('smartinvestor_data'); if(saved){ const data=JSON.parse(saved); sipsData=data.sipsData||[]; stocksData=data.stocksData||[]; mutualFundsData=data.mutualFundsData||[]; bondsData=data.bondsData||[]; metalsData=data.metalsData||[]; loansData=data.loansData||[]; sipTransactions=data.sipTransactions||[]; if(data.calcInputs){ document.getElementById('calcMonthlySIP').value=data.calcInputs.monthlySIP||''; document.getElementById('calcYearlyIncrement').value=data.calcInputs.yearlyIncrement||10; document.getElementById('calcExpectedReturn').value=data.calcInputs.expectedReturn||12; document.getElementById('calcDuration').value=data.calcInputs.duration||20; document.getElementById('calcUserAge').value=data.calcInputs.userAge||30; } refreshSIPsStatus(); return true; } return false; }
-        function backupToLocal(){ saveToLocalStorage(); showToast('Backup saved!'); }
-        function restoreFromLocal(){ if(loadFromLocalStorage()){ renderAll(); updateAIAdvisor(); runCalculator(); showToast('Restored!'); } else showToast('No backup'); }
-        function saveSIPSettings(){ reminderDays=parseInt(document.getElementById('reminderDays').value)||3; notificationsEnabled=document.getElementById('notificationsEnabled').checked; localStorage.setItem('sip_reminder_days',reminderDays); refreshSIPsStatus(); renderSIPs(); showToast('SIP settings saved!'); }
         
-        function renderAll(){ renderSIPs(); renderStocks(); renderMutualFunds(); renderBonds(); renderMetals(); renderLoans(); renderSIPTransactions(); updateDashboard(); updateAIAdvisor(); }
-        function refreshAllData(){ renderAll(); runCalculator(); showToast('All data refreshed!'); }
-        function openSettings(){ document.getElementById('settingsModal').classList.add('active'); }
-        function closeSettings(){ document.getElementById('settingsModal').classList.remove('active'); }
+        function updateDashboard(){ 
+            const assets={ 
+                stocksValue:stocksData.reduce((s,i)=>s+(i.currentValue||0),0), 
+                mfValue:mutualFundsData.reduce((s,i)=>s+(i.currentValue||0),0), 
+                bondsValue:bondsData.reduce((s,i)=>s+(i.totalInvestment||0),0), 
+                metalsValue:metalsData.reduce((s,i)=>s+(i.totalValue||0),0), 
+                totalLoans:loansData.reduce((s,i)=>s+(i.remainingBalance||0),0), 
+                sipTotal:getTotalMonthlySIP() 
+            }; 
+            const netWorth=assets.stocksValue+assets.mfValue+assets.bondsValue+assets.metalsValue-assets.totalLoans; 
+            document.getElementById('summaryStats').innerHTML=`<div class="stat-card"><div class="stat-label">Stocks</div><div class="stat-value">${formatNum(assets.stocksValue)}</div></div><div class="stat-card"><div class="stat-label">MF</div><div class="stat-value">${formatNum(assets.mfValue)}</div></div><div class="stat-card"><div class="stat-label">Bonds</div><div class="stat-value">${formatNum(assets.bondsValue)}</div></div><div class="stat-card"><div class="stat-label">Metals</div><div class="stat-value">${formatNum(assets.metalsValue)}</div></div><div class="stat-card"><div class="stat-label">Monthly SIP</div><div class="stat-value">${formatNum(assets.sipTotal)}</div></div><div class="stat-card"><div class="stat-label">Net Worth</div><div class="stat-value profit">${formatNum(netWorth)}</div></div>`; 
+            if(netWorthChart)netWorthChart.destroy(); 
+            const ctx=document.getElementById('netWorthChart')?.getContext('2d'); 
+            if(ctx){ 
+                netWorthChart=new Chart(ctx,{type:'pie',data:{labels:['Stocks','MF','Bonds','Metals'],datasets:[{data:[assets.stocksValue,assets.mfValue,assets.bondsValue,assets.metalsValue],backgroundColor:['#3b82f6','#10b981','#8b5cf6','#f59e0b']}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{color:'#e2e8f0',font:{size:9}}}}}}); 
+            } 
+        }
+
+        // ==================== SETTINGS & BACKUP ====================
+        function openSettingsModal() { document.getElementById('settingsModal').classList.add('active'); updateStorageInfo(); }
+        function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
+        
+        function saveSIPSettings(){ 
+            reminderDays=parseInt(document.getElementById('reminderDays').value)||3; 
+            notificationsEnabled=document.getElementById('notificationsEnabled').checked; 
+            refreshSIPsStatus(); 
+            renderSIPs(); 
+            saveAllData(); 
+            showToast('SIP settings saved!'); 
+        }
+        
+        function backupToLocal(){ saveAllData(); showToast('Backup saved!'); document.getElementById('localStatus').innerHTML = '✓ Backup saved'; setTimeout(()=>document.getElementById('localStatus').innerHTML='',3000); }
+        
+        function restoreFromLocal(){ if(loadAllData()){ renderAll(); updateAIAdvisor(); runCalculator(); showToast('Restored!'); } else showToast('No backup found'); }
+        
+        function exportData(){ 
+            const dataStr = JSON.stringify(localStorage.getItem('smartinvestor_complete_data'), null, 2); 
+            const blob = new Blob([dataStr], {type: 'application/json'}); 
+            const url = URL.createObjectURL(blob); 
+            const a = document.createElement('a'); 
+            a.href = url; 
+            a.download = `smartinvestor_backup_${new Date().toISOString().split('T')[0]}.json`; 
+            a.click(); 
+            URL.revokeObjectURL(url); 
+            showToast('Data exported!'); 
+        }
+        
+        // Google Sheets Integration
+        function saveGoogleScriptUrl(){ 
+            const url = document.getElementById('googleScriptUrl').value; 
+            if(url){ 
+                googleScriptUrl = url; 
+                saveAllData(); 
+                showToast('URL saved!'); 
+            } 
+        }
+        
+        async function testGoogleScript(){ 
+            const url = document.getElementById('googleScriptUrl').value || googleScriptUrl; 
+            if(!url){ showToast('Enter URL first'); return; } 
+            try{ 
+                await fetch(url, {method:'GET', mode:'cors'}); 
+                showToast('Connected!'); 
+                document.getElementById('googleSheetsStatus').innerHTML = '✅ Connected to Google Sheets!';
+            } catch(e){ 
+                showToast('Connection failed'); 
+                document.getElementById('googleSheetsStatus').innerHTML = '❌ Connection failed';
+            } 
+            setTimeout(()=>document.getElementById('googleSheetsStatus').innerHTML='',3000);
+        }
+        
+        async function syncToGoogleSheets(){ 
+            const url = document.getElementById('googleScriptUrl').value || googleScriptUrl; 
+            if(!url){ showToast('Configure URL first'); return; } 
+            const allData = {sipsData, stocksData, mutualFundsData, bondsData, metalsData, loansData, sipTransactions}; 
+            try{ 
+                await fetch(url, {method:'POST', mode:'no-cors', body:JSON.stringify(allData)}); 
+                showToast('Uploaded to Google Sheets!'); 
+            } catch(e){ showToast('Upload failed'); } 
+        }
+        
+        async function syncFromGoogleSheets(){ 
+            const url = document.getElementById('googleScriptUrl').value || googleScriptUrl; 
+            if(!url){ showToast('Configure URL first'); return; } 
+            try{ 
+                const r = await fetch(url, {method:'GET', mode:'cors'}); 
+                const data = await r.json(); 
+                if(data){ 
+                    if(data.sipsData) sipsData = data.sipsData; 
+                    if(data.stocksData) stocksData = data.stocksData; 
+                    refreshSIPsStatus(); 
+                    renderAll(); 
+                    updateAIAdvisor(); 
+                    saveAllData(); 
+                    showToast('Downloaded from Google Sheets!'); 
+                } 
+            } catch(e){ showToast('Download failed'); } 
+        }
+        
+        function renderAll(){ 
+            renderSIPs(); 
+            renderStocks(); 
+            renderMutualFunds(); 
+            renderBonds(); 
+            renderMetals(); 
+            renderLoans(); 
+            renderSIPTransactions(); 
+            updateDashboard(); 
+        }
+        
+        function refreshAllData(){ renderAll(); updateAIAdvisor(); runCalculator(); showToast('All data refreshed!'); }
 
         // Navigation
-        document.querySelectorAll('.nav-item').forEach(item=>{ item.addEventListener('click',()=>{ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); item.classList.add('active'); document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(item.dataset.section).classList.add('active'); if(item.dataset.section === 'advisor') updateAIAdvisor(); }); });
+        document.querySelectorAll('.nav-item').forEach(item=>{ 
+            item.addEventListener('click',()=>{ 
+                document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); 
+                item.classList.add('active'); 
+                document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); 
+                document.getElementById(item.dataset.section).classList.add('active'); 
+                if(item.dataset.section === 'advisor') updateAIAdvisor(); 
+            }); 
+        });
 
-        // INIT
-        loadFromLocalStorage();
+        // ==================== INITIALIZATION ====================
+        loadAllData();
         renderAll();
         updateAIAdvisor();
         runCalculator();
-        showToast('🤖 Smart Investor: AI uses YOUR SIP data for personalized suggestions!');
+        
+        // Load saved Google Script URL
+        if(googleScriptUrl) document.getElementById('googleScriptUrl').value = googleScriptUrl;
+        
+        // Load saved reminder settings
+        document.getElementById('reminderDays').value = reminderDays;
+        document.getElementById('notificationsEnabled').checked = notificationsEnabled;
+        
+        showToast('🤖 Smart Investor Ready! Your data is safe.');
     </script>
 </body>
 </html>
