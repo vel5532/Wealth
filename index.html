@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Smart Investor | Complete Wealth Tracker with Auto Backup</title>
+    <title>Smart Investor | Complete Wealth Tracker</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -86,7 +86,6 @@
         .highlight-green { background: rgba(16, 185, 129, 0.3); }
         .highlight-red { background: rgba(239, 68, 68, 0.3); }
         .ai-card { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.1)); border-left: 3px solid #3b82f6; padding: 0.6rem; border-radius: 0.5rem; }
-        .backup-indicator { position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.55rem; z-index: 50; }
     </style>
 </head>
 <body>
@@ -183,18 +182,31 @@
                 <button onclick="addMetal()">Add Metal</button>
             </div>
             <div class="card"><h2><i class="fas fa-coins"></i> Metals Portfolio</h2>
-                <div class="table-container"><table id="metalTable"><thead><tr><th>Type</th><th>Weight</th><th>Rate</th><th>Current Worth</th><th>Action</th></tr></thead><tbody id="metalTableBody"></tbody></tr></div>
+                <div class="table-container"><table id="metalTable"><thead><tr><th>Type</th><th>Weight</th><th>Rate</th><th>Current Worth</th><th>Action</th></tr></thead><tbody id="metalTableBody"></tbody></table></div>
             </div>
         </div>
 
-        <!-- Business -->
+        <!-- Business Section - FIXED -->
         <div id="business" class="section">
             <div class="card"><h2><i class="fas fa-plus"></i> Add Business</h2>
-                <div class="form-grid"><input type="text" id="businessName" placeholder="Business Name"><input type="number" id="businessInv" placeholder="Investment (₹)"><input type="number" id="businessVal" placeholder="Current Value (₹)"></div>
+                <div class="form-grid">
+                    <input type="text" id="businessName" placeholder="Business Name">
+                    <input type="number" id="businessInv" placeholder="Investment (₹)">
+                    <input type="number" id="businessVal" placeholder="Current Value (₹)">
+                    <input type="number" id="businessProfit" placeholder="Monthly Profit (₹)">
+                </div>
                 <button onclick="addBusiness()">Add Business</button>
             </div>
             <div class="card"><h2><i class="fas fa-briefcase"></i> Business Portfolio</h2>
-                <div class="table-container"><table id="businessTable"><thead><tr><th>Name</th><th>Investment</th><th>Current Value</th><th>Returns %</th><th>Action</th></tr></thead><tbody id="businessTableBody"></tbody></table></div>
+                <div class="table-container">
+                    <table id="businessTable">
+                        <thead>
+                            <tr><th>Business</th><th>Investment</th><th>Current Value</th><th>Monthly Profit</th><th>Returns %</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="businessTableBody"></tbody>
+                    </table>
+                </div>
+                <div class="stats-grid" id="businessSummary"></div>
             </div>
         </div>
 
@@ -243,12 +255,12 @@
         <div id="matrix" class="section">
             <div class="card"><h2><i class="fas fa-th-large"></i> Future Value Matrix</h2>
                 <div class="instruction-text">📊 Color: 🔵 1Cr+ | 🟢 5Cr+ | 🔴 10Cr+</div>
-                <div class="table-container"><table id="matrixTable"><thead id="matrixHeader"></thead><tbody id="matrixBody"></tbody><table></div>
+                <div class="table-container"><table id="matrixTable"><thead id="matrixHeader"></thead><tbody id="matrixBody"></tbody></table></div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal with Google Sheets & Backup -->
+    <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header"><h3><i class="fas fa-cog"></i> Settings</h3><button class="close-modal" onclick="closeSettings()">&times;</button></div>
@@ -262,7 +274,6 @@
             <div class="setting-group">
                 <label><i class="fas fa-cloud-upload-alt"></i> Google Sheets Backup</label>
                 <input type="text" id="gsheetUrl" placeholder="https://script.google.com/macros/s/.../exec">
-                <div class="instruction-text">Auto backup every 30 minutes</div>
                 <div class="button-group">
                     <button onclick="testGoogleSheet()" class="btn-warning">Test Connection</button>
                     <button onclick="saveGSheetUrl()" class="btn-success">Save URL</button>
@@ -280,7 +291,6 @@
                     <button onclick="restoreBackup()" class="btn-warning">Restore Backup</button>
                     <button onclick="clearAllData()" class="btn-danger">Clear All</button>
                 </div>
-                <div class="instruction-text">Auto JSON backup every 15 minutes</div>
                 <div id="backupStatus" class="instruction-text"></div>
             </div>
             
@@ -290,8 +300,6 @@
             </div>
         </div>
     </div>
-
-    <div class="backup-indicator" id="backupIndicator">💾 Auto-backup active</div>
 
     <script>
         // ==================== DATA STORES ====================
@@ -309,6 +317,56 @@
         let googleSheetUrl = '';
         let reminderDays = 3;
         let notificationsEnabled = false;
+
+        // ==================== MIGRATE OLD DATA ====================
+        function migrateOldData() {
+            // Try to load from old storage keys
+            const oldKeys = ['smartinvestor_complete_data', 'wealthtrack_data', 'smartinvestor_data', 'sip_reminder_data'];
+            let migrated = false;
+            
+            for (let key of oldKeys) {
+                let oldData = localStorage.getItem(key);
+                if (oldData) {
+                    try {
+                        let data = JSON.parse(oldData);
+                        // Map old data structure to new
+                        if (data.sipsData) sips = data.sipsData;
+                        if (data.stocksData) stocks = data.stocksData;
+                        if (data.mutualFundsData) mfs = data.mutualFundsData;
+                        if (data.bondsData) bonds = data.bondsData;
+                        if (data.metalsData) metals = data.metalsData;
+                        if (data.businessesData) businesses = data.businessesData;
+                        if (data.incomeData) incomes = data.incomeData;
+                        if (data.loansData) loans = data.loansData;
+                        if (data.sipTransactions) console.log("SIP transactions found");
+                        migrated = true;
+                        break;
+                    } catch(e) {}
+                }
+            }
+            
+            // Also try to load from current storage
+            let saved = localStorage.getItem('smartinvestor_final_data');
+            if (saved) {
+                let data = JSON.parse(saved);
+                if (data.sips) sips = data.sips;
+                if (data.stocks) stocks = data.stocks;
+                if (data.mfs) mfs = data.mfs;
+                if (data.bonds) bonds = data.bonds;
+                if (data.metals) metals = data.metals;
+                if (data.businesses) businesses = data.businesses;
+                if (data.incomes) incomes = data.incomes;
+                if (data.loans) loans = data.loans;
+                migrated = true;
+            }
+            
+            if (migrated) {
+                console.log("Data migrated from old app!");
+                showToast("Your existing data has been loaded!");
+            }
+            
+            updateSIPStatuses();
+        }
 
         // ==================== HELPER FUNCTIONS ====================
         function showToast(msg) { 
@@ -563,42 +621,52 @@
             document.getElementById('metalTableBody').innerHTML = html;
         }
 
-        // ==================== BUSINESS ====================
+        // ==================== BUSINESS (FIXED) ====================
         function addBusiness() {
             let name = document.getElementById('businessName').value;
             let inv = parseFloat(document.getElementById('businessInv').value);
             let val = parseFloat(document.getElementById('businessVal').value);
+            let profit = parseFloat(document.getElementById('businessProfit').value) || 0;
             if (!name || !inv || !val) { showToast("Please fill all fields"); return; }
             let returns = ((val - inv) / inv * 100).toFixed(2);
-            businesses.push({id: generateId(), name, investment: inv, value: val, returns});
+            businesses.push({id: generateId(), name, investment: inv, value: val, monthlyProfit: profit, returns: returns});
             document.getElementById('businessName').value = '';
             document.getElementById('businessInv').value = '';
             document.getElementById('businessVal').value = '';
+            document.getElementById('businessProfit').value = '';
             renderBusiness();
             updateDashboard();
             updateAI();
             saveData();
-            showToast("Business added!");
+            showToast(`Business "${name}" added!`);
         }
         
         function deleteBusiness(id) { businesses = businesses.filter(b => b.id !== id); renderBusiness(); updateDashboard(); updateAI(); saveData(); showToast("Business deleted"); }
         
         function renderBusiness() {
+            let tbody = document.getElementById('businessTableBody');
+            if (!tbody) return;
             let html = '';
+            let totalValue = 0;
             businesses.forEach(b => {
+                totalValue += b.value;
                 html += `<tr>
                     <td>${b.name}</td
                     <td>₹${b.investment.toLocaleString()}</td
                     <td class="profit">₹${b.value.toLocaleString()}</td
+                    <td class="profit">₹${(b.monthlyProfit || 0).toLocaleString()}</td
                     <td class="${b.returns >= 0 ? 'profit' : 'loss'}">${b.returns}%</td
                     <td><button onclick="deleteBusiness('${b.id}')" class="delete-btn"><i class="fas fa-trash"></i></button></td
                 </tr>`;
             });
-            if (businesses.length === 0) html = '<tr><td colspan="5" class="empty-state"><i class="fas fa-briefcase"></i>No businesses added. Add your business above!</td</tr>';
-            document.getElementById('businessTableBody').innerHTML = html;
+            if (businesses.length === 0) {
+                html = '<tr><td colspan="6" class="empty-state"><i class="fas fa-briefcase"></i>No businesses added. Add your business above!</td</tr>';
+            }
+            tbody.innerHTML = html;
+            document.getElementById('businessSummary').innerHTML = `<div class="stat-card"><div class="stat-label">Total Business Value</div><div class="stat-value profit">₹${(totalValue/100000).toFixed(2)}L</div></div>`;
         }
 
-        // ==================== INCOME (WORKING) ====================
+        // ==================== INCOME ====================
         function addIncome() {
             let source = document.getElementById('incomeSource').value;
             let amount = parseFloat(document.getElementById('incomeAmt').value);
@@ -719,7 +787,7 @@
             reminderHtml += '</div>';
             document.getElementById('remindersList').innerHTML = reminderHtml;
             
-            // Pie Chart - FIXED SIZE
+            // Pie Chart
             if (portfolioChart) portfolioChart.destroy();
             let ctx = document.getElementById('portfolioChart')?.getContext('2d');
             if (ctx) {
@@ -821,7 +889,7 @@
         
         function updateMatrix(sip, rate, years) {
             let returns = [8, 10, 12, 15, 18];
-            let matrixHtml = '<tr><th>Year</th>' + returns.map(r => `<th>${r}%</th>`).join('') + ' hilab';
+            let matrixHtml = '<tr><th>Year</th>' + returns.map(r => `<th>${r}%</th>`).join('') + '</tr>';
             for (let y = 1; y <= Math.min(years, 25); y++) {
                 matrixHtml += '<tr>';
                 matrixHtml += `<td><strong>${y}</strong></td>`;
@@ -848,32 +916,23 @@
                 googleSheetUrl = url;
                 localStorage.setItem('googleSheetUrl', url);
                 showToast("Google Sheets URL saved!");
-                document.getElementById('gsheetStatus').innerHTML = '✅ URL saved';
-                setTimeout(() => document.getElementById('gsheetStatus').innerHTML = '', 3000);
             }
         }
         
         async function testGoogleSheet() {
             let url = document.getElementById('gsheetUrl').value || googleSheetUrl;
             if (!url) { showToast("Enter Google Sheets URL first"); return; }
-            document.getElementById('gsheetStatus').innerHTML = '⏳ Testing connection...';
             try {
                 let response = await fetch(url, { method: 'GET', mode: 'cors' });
-                if (response.ok) {
-                    document.getElementById('gsheetStatus').innerHTML = '✅ Connected!';
-                    showToast("Connected to Google Sheets!");
-                } else throw new Error();
-            } catch(e) {
-                document.getElementById('gsheetStatus').innerHTML = '❌ Connection failed';
-                showToast("Connection failed. Check URL and deployment.");
-            }
-            setTimeout(() => document.getElementById('gsheetStatus').innerHTML = '', 3000);
+                if (response.ok) showToast("Connected to Google Sheets!");
+                else throw new Error();
+            } catch(e) { showToast("Connection failed"); }
         }
         
         async function manualGoogleBackup() {
             let url = document.getElementById('gsheetUrl').value || googleSheetUrl;
             if (!url) { showToast("Configure Google Sheets URL first"); return; }
-            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans, timestamp: new Date().toISOString() };
+            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans };
             try {
                 await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(allData) });
                 showToast("Manual backup sent to Google Sheets!");
@@ -889,12 +948,8 @@
                 if (data) {
                     if (data.sips) sips = data.sips;
                     if (data.stocks) stocks = data.stocks;
-                    if (data.incomes) incomes = data.incomes;
-                    if (data.mfs) mfs = data.mfs;
-                    if (data.bonds) bonds = data.bonds;
-                    if (data.metals) metals = data.metals;
                     if (data.businesses) businesses = data.businesses;
-                    if (data.loans) loans = data.loans;
+                    if (data.incomes) incomes = data.incomes;
                     updateSIPStatuses();
                     renderAll();
                     saveData();
@@ -927,12 +982,8 @@
                     let data = JSON.parse(event.target.result);
                     if (data.sips) sips = data.sips;
                     if (data.stocks) stocks = data.stocks;
-                    if (data.incomes) incomes = data.incomes;
-                    if (data.mfs) mfs = data.mfs;
-                    if (data.bonds) bonds = data.bonds;
-                    if (data.metals) metals = data.metals;
                     if (data.businesses) businesses = data.businesses;
-                    if (data.loans) loans = data.loans;
+                    if (data.incomes) incomes = data.incomes;
                     updateSIPStatuses();
                     renderAll();
                     saveData();
@@ -953,30 +1004,6 @@
                 showToast("All data cleared!");
             }
         }
-        
-        function autoJSONBackup() {
-            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans };
-            localStorage.setItem('smartinvestor_auto_backup', JSON.stringify(allData));
-            updateBackupIndicator('JSON backup at ' + new Date().toLocaleTimeString());
-        }
-        
-        async function autoGoogleBackup() {
-            let url = googleSheetUrl;
-            if (!url) return;
-            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans };
-            try {
-                await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(allData) });
-                updateBackupIndicator('Google backup at ' + new Date().toLocaleTimeString());
-            } catch(e) {}
-        }
-        
-        function updateBackupIndicator(msg) {
-            let indicator = document.getElementById('backupIndicator');
-            if (indicator) {
-                indicator.innerHTML = `💾 ${msg}`;
-                setTimeout(() => indicator.innerHTML = `💾 Auto-backup active`, 3000);
-            }
-        }
 
         // ==================== DATA PERSISTENCE ====================
         function saveData() {
@@ -986,34 +1013,6 @@
             document.getElementById('dataStatus').innerHTML = `<i class="fas fa-database"></i> Saved (${size}KB)`;
             setTimeout(() => document.getElementById('dataStatus').innerHTML = `<i class="fas fa-database"></i> Ready`, 2000);
             updateStorageInfo();
-        }
-        
-        function loadData() {
-            let saved = localStorage.getItem('smartinvestor_final_data');
-            if (saved) {
-                let data = JSON.parse(saved);
-                sips = data.sips || [];
-                stocks = data.stocks || [];
-                mfs = data.mfs || [];
-                bonds = data.bonds || [];
-                metals = data.metals || [];
-                businesses = data.businesses || [];
-                incomes = data.incomes || [];
-                loans = data.loans || [];
-                updateSIPStatuses();
-            }
-            // Load Google Sheets URL
-            let savedUrl = localStorage.getItem('googleSheetUrl');
-            if (savedUrl) {
-                googleSheetUrl = savedUrl;
-                document.getElementById('gsheetUrl').value = savedUrl;
-            }
-            // Load reminder settings
-            let savedDays = localStorage.getItem('remindDays');
-            if (savedDays) {
-                reminderDays = parseInt(savedDays);
-                document.getElementById('remindDays').value = reminderDays;
-            }
         }
         
         function saveSettings() {
@@ -1066,18 +1065,30 @@
                 closeSidebar();
                 if (section === 'advisor') updateAI();
                 if (section === 'calculator') runCalculator();
+                if (section === 'business') renderBusiness();
             });
         });
 
         // ==================== AUTO BACKUP TIMERS ====================
-        setInterval(() => { if (sips.length || stocks.length || incomes.length) autoJSONBackup(); }, 15 * 60 * 1000);
-        setInterval(() => { if ((sips.length || stocks.length) && googleSheetUrl) autoGoogleBackup(); }, 30 * 60 * 1000);
         setInterval(() => { if (sips.length || stocks.length) saveData(); }, 30000);
 
         // ==================== INITIALIZATION ====================
-        loadData();
+        migrateOldData();
         renderAll();
-        showToast("🚀 Smart Investor Ready! All features working including Google Sheets backup.");
+        
+        // Load settings
+        let savedDays = localStorage.getItem('remindDays');
+        if (savedDays) {
+            reminderDays = parseInt(savedDays);
+            document.getElementById('remindDays').value = reminderDays;
+        }
+        let savedUrl = localStorage.getItem('googleSheetUrl');
+        if (savedUrl) {
+            googleSheetUrl = savedUrl;
+            document.getElementById('gsheetUrl').value = savedUrl;
+        }
+        
+        showToast("🚀 Smart Investor Ready! Your existing data has been loaded.");
     </script>
 </body>
 </html>
