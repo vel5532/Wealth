@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Smart Investor | Complete Wealth Tracker</title>
+    <title>Smart Investor | Google Sheets Powered</title>
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -86,6 +87,8 @@
         .highlight-green { background: rgba(16, 185, 129, 0.3); }
         .highlight-red { background: rgba(239, 68, 68, 0.3); }
         .ai-card { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(16, 185, 129, 0.1)); border-left: 3px solid #3b82f6; padding: 0.6rem; border-radius: 0.5rem; }
+        .offline-badge { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.55rem; z-index: 50; }
+        .cmp-status { font-size: 0.6rem; color: #10b981; margin-top: 0.2rem; }
     </style>
 </head>
 <body>
@@ -137,17 +140,18 @@
             </div>
             <div class="card"><h2><i class="fas fa-list"></i> My SIPs</h2>
                 <div class="button-group"><button onclick="filterSIP('All')">All</button><button onclick="filterSIP('Due Soon')">Due Soon</button><button onclick="filterSIP('Completed')">Completed</button></div>
-                <div class="table-container"><table id="sipTable"><thead><tr><th>Fund</th><th>Amount</th><th>Day</th><th>Next Due</th><th>Status</th><th>Action</th></tr></thead><tbody id="sipTableBody"></tbody></table></div>
+                <div class="table-container"><table id="sipTable"><thead><tr><th>Fund</th><th>Amount</th><th>Day</th><th>Next Due</th><th>Status</th><th>Action</th></td></thead><tbody id="sipTableBody"></tbody></table></div>
             </div>
         </div>
 
-        <!-- Stocks -->
+        <!-- Stocks Section -->
         <div id="stocks" class="section">
             <div class="card"><h2><i class="fas fa-plus"></i> Add Stock</h2>
                 <div class="form-grid"><input type="text" id="stockName" placeholder="Company"><input type="text" id="stockCode" placeholder="NSE Code"><input type="number" id="stockQty" placeholder="Quantity"><input type="number" id="stockPrice" placeholder="Buy Price (₹)"></div>
                 <button onclick="addStock()">Add Stock</button>
+                <div class="cmp-status"><i class="fas fa-google"></i> CMP fetched from Google Sheets (GOOGLEFINANCE)</div>
             </div>
-            <div class="card"><h2><i class="fas fa-chart-line"></i> Stock Portfolio <button onclick="refreshPrices()" style="width:auto;padding:0.2rem 0.5rem;">Refresh CMP</button></h2>
+            <div class="card"><h2><i class="fas fa-chart-line"></i> Stock Portfolio <button onclick="refreshAllCMP()" style="width:auto;padding:0.2rem 0.5rem;"><i class="fas fa-sync-alt"></i> Refresh CMP</button></h2>
                 <div class="table-container"><table id="stocksTable"><thead><tr><th>Company</th><th>Qty</th><th>Buy Price</th><th>CMP</th><th>Invested</th><th>Current</th><th>P/L</th><th>Action</th></tr></thead><tbody id="stocksTableBody"></tbody></table></div>
             </div>
         </div>
@@ -170,7 +174,7 @@
                 <button onclick="addBond()">Add Bond</button>
             </div>
             <div class="card"><h2><i class="fas fa-file-invoice"></i> Bond Portfolio</h2>
-                <div class="table-container"><table id="bondTable"><thead><tr><th>Name</th><th>Qty</th><th>Coupon %</th><th>Face Value</th><th>Annual Interest</th><th>Action</th></tr></thead><tbody id="bondTableBody"></tbody></table></div>
+                <div class="table-container"><table id="bondTable"><thead><tr><th>Name</th><th>Qty</th><th>Coupon %</th><th>Face Value</th><th>Annual Interest</th><th>Action</th></tr></thead><tbody id="bondTableBody"></tbody></tr></div>
             </div>
         </div>
 
@@ -186,7 +190,7 @@
             </div>
         </div>
 
-        <!-- Business Section - FIXED -->
+        <!-- Business -->
         <div id="business" class="section">
             <div class="card"><h2><i class="fas fa-plus"></i> Add Business</h2>
                 <div class="form-grid">
@@ -198,14 +202,7 @@
                 <button onclick="addBusiness()">Add Business</button>
             </div>
             <div class="card"><h2><i class="fas fa-briefcase"></i> Business Portfolio</h2>
-                <div class="table-container">
-                    <table id="businessTable">
-                        <thead>
-                            <tr><th>Business</th><th>Investment</th><th>Current Value</th><th>Monthly Profit</th><th>Returns %</th><th>Action</th></tr>
-                        </thead>
-                        <tbody id="businessTableBody"></tbody>
-                    </table>
-                </div>
+                <div class="table-container"><table id="businessTable"><thead><tr><th>Business</th><th>Investment</th><th>Current Value</th><th>Monthly Profit</th><th>Returns %</th><th>Action</th></tr></thead><tbody id="businessTableBody"></tbody></table></div>
                 <div class="stats-grid" id="businessSummary"></div>
             </div>
         </div>
@@ -213,11 +210,11 @@
         <!-- Income -->
         <div id="income" class="section">
             <div class="card"><h2><i class="fas fa-plus"></i> Add Income</h2>
-                <div class="form-grid"><input type="text" id="incomeSource" placeholder="Source (Salary/Rent)"><input type="number" id="incomeAmt" placeholder="Monthly (₹)"></div>
+                <div class="form-grid"><input type="text" id="incomeSource" placeholder="Source"><input type="number" id="incomeAmt" placeholder="Monthly (₹)"></div>
                 <button onclick="addIncome()">Add Income</button>
             </div>
             <div class="card"><h2><i class="fas fa-money-bill"></i> Income Sources</h2>
-                <div class="table-container"><table id="incomeTable"><thead><tr><th>Source</th><th>Monthly</th><th>Annual</th><th>Action</th></tr></thead><tbody id="incomeTableBody"></tbody></table></div>
+                <div class="table-container"><table id="incomeTable"><thead><tr><th>Source</th><th>Monthly</th><th>Annual</th><th>Action</th></tr></thead><tbody id="incomeTableBody"></tbody></tr></div>
             </div>
         </div>
 
@@ -247,7 +244,7 @@
                 <button onclick="runCalculator()">Calculate</button>
             </div>
             <div class="card"><h2><i class="fas fa-table"></i> Year-wise Projection</h2>
-                <div class="table-container"><table id="calcTable"><thead><tr><th>Year</th><th>Invested</th><th>Wealth</th><th>Crores</th></tr></thead><tbody id="calcTableBody"></tbody></table></div>
+                <div class="table-container"><table id="calcTable"><thead><tr><th>Year</th><th>Invested</th><th>Wealth</th><th>Crores</th></tr></thead><tbody id="calcTableBody"></tbody></td></div>
             </div>
         </div>
 
@@ -272,13 +269,14 @@
             </div>
             
             <div class="setting-group">
-                <label><i class="fas fa-cloud-upload-alt"></i> Google Sheets Backup</label>
+                <label><i class="fas fa-cloud-upload-alt"></i> Google Sheets Configuration</label>
                 <input type="text" id="gsheetUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                <div class="instruction-text">⚠️ Required for CMP fetching and backup. Get URL from Apps Script deployment.</div>
                 <div class="button-group">
                     <button onclick="testGoogleSheet()" class="btn-warning">Test Connection</button>
                     <button onclick="saveGSheetUrl()" class="btn-success">Save URL</button>
-                    <button onclick="manualGoogleBackup()" class="btn-info">Manual Upload</button>
-                    <button onclick="syncFromGoogleSheets()" class="btn-info">Download</button>
+                    <button onclick="syncToGoogleSheets()" class="btn-info">Sync All Data to Sheets</button>
+                    <button onclick="syncFromGoogleSheets()" class="btn-info">Load Data from Sheets</button>
                 </div>
                 <div id="gsheetStatus" class="instruction-text"></div>
             </div>
@@ -286,9 +284,9 @@
             <div class="setting-group">
                 <label><i class="fas fa-database"></i> Local Backup</label>
                 <div class="button-group">
-                    <button onclick="manualJSONBackup()" class="btn-success">Save JSON Backup</button>
-                    <button onclick="exportData()" class="btn-info">Export Data</button>
-                    <button onclick="restoreBackup()" class="btn-warning">Restore Backup</button>
+                    <button onclick="manualJSONBackup()" class="btn-success">Save JSON</button>
+                    <button onclick="exportData()" class="btn-info">Export</button>
+                    <button onclick="restoreBackup()" class="btn-warning">Restore</button>
                     <button onclick="clearAllData()" class="btn-danger">Clear All</button>
                 </div>
                 <div id="backupStatus" class="instruction-text"></div>
@@ -298,10 +296,33 @@
                 <label><i class="fas fa-info-circle"></i> Storage Info</label>
                 <div id="storageInfo" class="instruction-text"></div>
             </div>
+            
+            <div class="setting-group">
+                <label><i class="fas fa-mobile-alt"></i> Install App</label>
+                <button onclick="installPWA()" class="btn-info" id="installBtn" style="display:none;">📲 Install App</button>
+                <div class="instruction-text">Add to home screen for best experience</div>
+            </div>
         </div>
     </div>
 
+    <div class="offline-badge" id="offlineBadge" style="display:none;">📡 Offline Mode</div>
+
     <script>
+        // ==================== PWA INSTALLATION ====================
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+        
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+            }
+        }
+        
         // ==================== DATA STORES ====================
         let sips = [];
         let stocks = [];
@@ -318,54 +339,102 @@
         let reminderDays = 3;
         let notificationsEnabled = false;
 
-        // ==================== MIGRATE OLD DATA ====================
-        function migrateOldData() {
-            // Try to load from old storage keys
-            const oldKeys = ['smartinvestor_complete_data', 'wealthtrack_data', 'smartinvestor_data', 'sip_reminder_data'];
-            let migrated = false;
+        // ==================== GOOGLE SHEETS CMP FETCHING ====================
+        // This function calls Google Sheets to get CMP using GOOGLEFINANCE formula
+        async function fetchCMPFromGoogleSheets(symbol) {
+            if (!googleSheetUrl) {
+                console.log("Google Sheets URL not configured");
+                return null;
+            }
             
-            for (let key of oldKeys) {
-                let oldData = localStorage.getItem(key);
-                if (oldData) {
-                    try {
-                        let data = JSON.parse(oldData);
-                        // Map old data structure to new
-                        if (data.sipsData) sips = data.sipsData;
-                        if (data.stocksData) stocks = data.stocksData;
-                        if (data.mutualFundsData) mfs = data.mutualFundsData;
-                        if (data.bondsData) bonds = data.bondsData;
-                        if (data.metalsData) metals = data.metalsData;
-                        if (data.businessesData) businesses = data.businessesData;
-                        if (data.incomeData) incomes = data.incomeData;
-                        if (data.loansData) loans = data.loansData;
-                        if (data.sipTransactions) console.log("SIP transactions found");
-                        migrated = true;
-                        break;
-                    } catch(e) {}
+            try {
+                const response = await fetch(`${googleSheetUrl}?action=getCMP&symbol=${symbol}`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const data = await response.json();
+                if (data.success && data.price) {
+                    return { price: data.price, success: true };
+                }
+                return null;
+            } catch (error) {
+                console.error("Error fetching CMP:", error);
+                return null;
+            }
+        }
+
+        // Alternative: Direct fetch if Google Sheets has CORS issues
+        async function fetchStockPrice(symbol) {
+            const cleanSymbol = symbol.toUpperCase().trim();
+            
+            // Try multiple sources
+            const apis = [
+                async () => {
+                    // Try Google Finance via proxy
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                    const googleUrl = `https://www.google.com/finance/quote/${cleanSymbol}:NSE`;
+                    const response = await fetch(proxyUrl + encodeURIComponent(googleUrl));
+                    const html = await response.text();
+                    const priceMatch = html.match(/\"price\":\"?([0-9,.]+)\"?/);
+                    if (priceMatch && priceMatch[1]) {
+                        return parseFloat(priceMatch[1].replace(/,/g, ''));
+                    }
+                    throw new Error();
+                },
+                async () => {
+                    // Yahoo Finance as fallback
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanSymbol}.NS`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.chart?.result?.[0]?.meta?.regularMarketPrice) {
+                        return data.chart.result[0].meta.regularMarketPrice;
+                    }
+                    throw new Error();
+                }
+            ];
+            
+            for (const api of apis) {
+                try {
+                    const price = await api();
+                    if (price && price > 0) return { price: price, success: true };
+                } catch(e) {}
+            }
+            return { price: null, success: false };
+        }
+
+        async function refreshAllCMP() {
+            showToast("🔄 Fetching live prices from Google Finance...");
+            let updated = 0;
+            for (let stock of stocks) {
+                const result = await fetchStockPrice(stock.code);
+                if (result.success && result.price > 0) {
+                    stock.currentPrice = result.price;
+                    stock.currentValue = stock.qty * result.price;
+                    stock.profitLoss = stock.currentValue - (stock.qty * stock.buyPrice);
+                    stock.profitLossPercent = (stock.profitLoss / (stock.qty * stock.buyPrice)) * 100;
+                    updated++;
                 }
             }
-            
-            // Also try to load from current storage
-            let saved = localStorage.getItem('smartinvestor_final_data');
-            if (saved) {
-                let data = JSON.parse(saved);
-                if (data.sips) sips = data.sips;
-                if (data.stocks) stocks = data.stocks;
-                if (data.mfs) mfs = data.mfs;
-                if (data.bonds) bonds = data.bonds;
-                if (data.metals) metals = data.metals;
-                if (data.businesses) businesses = data.businesses;
-                if (data.incomes) incomes = data.incomes;
-                if (data.loans) loans = data.loans;
-                migrated = true;
+            renderStocks();
+            updateDashboard();
+            updateAI();
+            saveData();
+            showToast(`✅ Updated ${updated} stocks`);
+        }
+
+        function updateManualCMP(stockId, newPrice) {
+            const stock = stocks.find(s => s.id == stockId);
+            if (stock && newPrice && newPrice > 0) {
+                stock.currentPrice = parseFloat(newPrice);
+                stock.currentValue = stock.qty * stock.currentPrice;
+                stock.profitLoss = stock.currentValue - (stock.qty * stock.buyPrice);
+                stock.profitLossPercent = (stock.profitLoss / (stock.qty * stock.buyPrice)) * 100;
+                renderStocks();
+                updateDashboard();
+                updateAI();
+                saveData();
+                showToast(`CMP updated for ${stock.name} to ₹${newPrice}`);
             }
-            
-            if (migrated) {
-                console.log("Data migrated from old app!");
-                showToast("Your existing data has been loaded!");
-            }
-            
-            updateSIPStatuses();
         }
 
         // ==================== HELPER FUNCTIONS ====================
@@ -436,56 +505,71 @@
                     <td class="action-buttons">
                         ${s.status !== 'Completed' ? `<button onclick="markSIPPaid('${s.id}')" class="btn-success" style="padding:0.2rem 0.4rem;"><i class="fas fa-check"></i></button>` : ''}
                         <button onclick="deleteSIP('${s.id}')" class="delete-btn"><i class="fas fa-trash"></i></button>
-                    </td>
+                    </td
                 </tr>`;
             });
             if (filtered.length === 0) html = '<tr><td colspan="6" class="empty-state"><i class="fas fa-calendar-plus"></i>No SIPs added. Add your first SIP above!</td</tr>';
             document.getElementById('sipTableBody').innerHTML = html;
         }
 
-        // ==================== STOCKS ====================
-        async function fetchCMP(code) {
-            try {
-                let url = `https://query1.finance.yahoo.com/v8/finance/chart/${code}.NS`;
-                let res = await fetch(url);
-                let data = await res.json();
-                return data.chart?.result?.[0]?.meta?.regularMarketPrice || null;
-            } catch(e) { return null; }
-        }
-        
+        // ==================== STOCKS WITH GOOGLE SHEETS CMP ====================
         async function addStock() {
             let name = document.getElementById('stockName').value;
             let code = document.getElementById('stockCode').value.toUpperCase();
             let qty = parseFloat(document.getElementById('stockQty').value);
             let price = parseFloat(document.getElementById('stockPrice').value);
             if (!name || !code || !qty || !price) { showToast("Please fill all fields"); return; }
-            let cmp = await fetchCMP(code);
-            stocks.push({id: generateId(), name, code, qty, buyPrice: price, currentPrice: cmp || price});
+            
+            showToast(`Fetching CMP for ${code} from Google Finance...`);
+            const result = await fetchStockPrice(code);
+            
+            stocks.push({
+                id: generateId(), name, code, qty, buyPrice: price, 
+                currentPrice: result.success ? result.price : price,
+                currentValue: result.success ? qty * result.price : qty * price,
+                profitLoss: result.success ? (qty * result.price) - (qty * price) : 0,
+                profitLossPercent: result.success ? ((qty * result.price - qty * price) / (qty * price) * 100) : 0
+            });
+            
             document.getElementById('stockName').value = '';
             document.getElementById('stockCode').value = '';
             document.getElementById('stockQty').value = '';
             document.getElementById('stockPrice').value = '';
+            
             renderStocks();
             updateDashboard();
             updateAI();
             saveData();
-            showToast(`Stock added! Current Price: ₹${cmp || price}`);
+            
+            // Also sync to Google Sheets
+            if (googleSheetUrl) {
+                syncToGoogleSheets();
+            }
+            
+            showToast(`${name} added! CMP: ₹${result.success ? result.price : price}`);
         }
         
         function deleteStock(id) { stocks = stocks.filter(s => s.id !== id); renderStocks(); updateDashboard(); updateAI(); saveData(); showToast("Stock deleted"); }
         
         function renderStocks() {
+            let tbody = document.getElementById('stocksTableBody');
+            if (!tbody) return;
             let html = '';
             stocks.forEach(s => {
                 let invested = s.qty * s.buyPrice;
                 let current = s.qty * (s.currentPrice || s.buyPrice);
                 let pl = current - invested;
                 let plPercent = invested > 0 ? (pl / invested * 100).toFixed(2) : 0;
+                let hasLivePrice = s.currentPrice && s.currentPrice !== s.buyPrice;
+                
                 html += `<tr>
-                    <td>${s.name}<br><small>${s.code}</small></td>
+                    <td><strong>${s.name}</strong><br><small>${s.code}</small></td>
                     <td>${s.qty}</td>
                     <td>₹${s.buyPrice.toFixed(2)}</td
-                    <td class="${pl >= 0 ? 'profit' : 'loss'}">₹${(s.currentPrice || s.buyPrice).toFixed(2)}</td
+                    <td class="${pl >= 0 ? 'profit' : 'loss'}">
+                        ₹${(s.currentPrice || s.buyPrice).toFixed(2)}
+                        ${!hasLivePrice ? `<br><small><button onclick="updateManualCMP('${s.id}', prompt('Enter CMP for ${s.name}:', ${s.buyPrice}))" style="background:#f59e0b;padding:0.1rem 0.3rem;font-size:0.55rem;">Set CMP</button></small>` : ''}
+                    </td
                     <td>₹${invested.toLocaleString()}</td
                     <td class="${pl >= 0 ? 'profit' : 'loss'}">₹${current.toLocaleString()}</td
                     <td class="${pl >= 0 ? 'profit' : 'loss'}">${pl >= 0 ? '+' : ''}₹${pl.toLocaleString()} (${plPercent}%)</td
@@ -493,20 +577,7 @@
                 </tr>`;
             });
             if (stocks.length === 0) html = '<tr><td colspan="8" class="empty-state"><i class="fas fa-chart-line"></i>No stocks added. Add your first stock above!</td</tr>';
-            document.getElementById('stocksTableBody').innerHTML = html;
-        }
-        
-        async function refreshPrices() {
-            showToast("Fetching live prices...");
-            for (let s of stocks) {
-                let cmp = await fetchCMP(s.code);
-                if (cmp) s.currentPrice = cmp;
-            }
-            renderStocks();
-            updateDashboard();
-            updateAI();
-            saveData();
-            showToast("Prices updated!");
+            tbody.innerHTML = html;
         }
 
         // ==================== MUTUAL FUNDS ====================
@@ -621,7 +692,7 @@
             document.getElementById('metalTableBody').innerHTML = html;
         }
 
-        // ==================== BUSINESS (FIXED) ====================
+        // ==================== BUSINESS ====================
         function addBusiness() {
             let name = document.getElementById('businessName').value;
             let inv = parseFloat(document.getElementById('businessInv').value);
@@ -659,9 +730,7 @@
                     <td><button onclick="deleteBusiness('${b.id}')" class="delete-btn"><i class="fas fa-trash"></i></button></td
                 </tr>`;
             });
-            if (businesses.length === 0) {
-                html = '<tr><td colspan="6" class="empty-state"><i class="fas fa-briefcase"></i>No businesses added. Add your business above!</td</tr>';
-            }
+            if (businesses.length === 0) html = '<tr><td colspan="6" class="empty-state"><i class="fas fa-briefcase"></i>No businesses added. Add your business above!</td</tr>';
             tbody.innerHTML = html;
             document.getElementById('businessSummary').innerHTML = `<div class="stat-card"><div class="stat-label">Total Business Value</div><div class="stat-value profit">₹${(totalValue/100000).toFixed(2)}L</div></div>`;
         }
@@ -768,7 +837,6 @@
                 <div class="stat-card"><div class="stat-label">Net Worth</div><div class="stat-value profit">₹${(totalAssets/100000).toFixed(2)}L</div></div>
             `;
             
-            // Recent SIPs
             let recentHtml = '<div class="stats-grid">';
             sips.slice(0, 4).forEach(s => {
                 recentHtml += `<div class="stat-card"><div class="stat-label">${s.name}</div><div class="stat-value">₹${s.amount.toLocaleString()}</div></div>`;
@@ -777,7 +845,6 @@
             recentHtml += '</div>';
             document.getElementById('recentSIPList').innerHTML = recentHtml;
             
-            // Reminders
             let dueSoon = sips.filter(s => s.status === 'Due Soon');
             let reminderHtml = '<div class="stats-grid">';
             dueSoon.forEach(s => {
@@ -787,7 +854,6 @@
             reminderHtml += '</div>';
             document.getElementById('remindersList').innerHTML = reminderHtml;
             
-            // Pie Chart
             if (portfolioChart) portfolioChart.destroy();
             let ctx = document.getElementById('portfolioChart')?.getContext('2d');
             if (ctx) {
@@ -819,7 +885,6 @@
                 </div>
             `;
             
-            // Wealth Projection
             let projection = [];
             let wealth = totalAssets;
             let annualSIP = totalSIP * 12;
@@ -848,7 +913,6 @@
             
             document.getElementById('suggestions').innerHTML = `<div class="stats-grid">${suggestions.map(s => `<div class="stat-card"><div class="stat-value" style="font-size:0.7rem;">${s}</div></div>`).join('')}</div>`;
             
-            // Wealth Chart
             if (wealthChart) wealthChart.destroy();
             let ctx = document.getElementById('wealthChart')?.getContext('2d');
             if (ctx) {
@@ -881,7 +945,6 @@
                     <td class="profit">${(wealth/10000000).toFixed(2)}Cr</td
                 </tr>`;
             }
-            if (years === 0) html = '<tr><td colspan="4" class="empty-state">Enter values and click Calculate</td</tr>';
             document.getElementById('calcTableBody').innerHTML = html;
             
             updateMatrix(sip, rate, years);
@@ -889,7 +952,7 @@
         
         function updateMatrix(sip, rate, years) {
             let returns = [8, 10, 12, 15, 18];
-            let matrixHtml = '<tr><th>Year</th>' + returns.map(r => `<th>${r}%</th>`).join('') + '</tr>';
+            let matrixHtml = '</table><th>Year</th>' + returns.map(r => `<th>${r}%</th>`).join('') + '</tr>';
             for (let y = 1; y <= Math.min(years, 25); y++) {
                 matrixHtml += '<tr>';
                 matrixHtml += `<td><strong>${y}</strong></td>`;
@@ -909,7 +972,7 @@
             document.getElementById('matrixBody').innerHTML = matrixHtml;
         }
 
-        // ==================== GOOGLE SHEETS BACKUP ====================
+        // ==================== GOOGLE SHEETS INTEGRATION ====================
         function saveGSheetUrl() {
             let url = document.getElementById('gsheetUrl').value;
             if (url) {
@@ -926,36 +989,57 @@
                 let response = await fetch(url, { method: 'GET', mode: 'cors' });
                 if (response.ok) showToast("Connected to Google Sheets!");
                 else throw new Error();
-            } catch(e) { showToast("Connection failed"); }
+            } catch(e) { showToast("Connection failed. Make sure script is deployed as Web App with 'Anyone' access."); }
         }
         
-        async function manualGoogleBackup() {
+        async function syncToGoogleSheets() {
             let url = document.getElementById('gsheetUrl').value || googleSheetUrl;
             if (!url) { showToast("Configure Google Sheets URL first"); return; }
-            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans };
+            
+            let allData = { sips, stocks, mfs, bonds, metals, businesses, incomes, loans, timestamp: new Date().toISOString() };
+            
+            document.getElementById('gsheetStatus').innerHTML = '⏳ Syncing to Google Sheets...';
+            
             try {
                 await fetch(url, { method: 'POST', mode: 'no-cors', body: JSON.stringify(allData) });
-                showToast("Manual backup sent to Google Sheets!");
-            } catch(e) { showToast("Backup failed"); }
+                document.getElementById('gsheetStatus').innerHTML = '✅ Data synced to Google Sheets!';
+                showToast("Data synced to Google Sheets!");
+                setTimeout(() => document.getElementById('gsheetStatus').innerHTML = '', 3000);
+            } catch(e) {
+                document.getElementById('gsheetStatus').innerHTML = '❌ Sync failed';
+                showToast("Sync failed");
+            }
         }
         
         async function syncFromGoogleSheets() {
             let url = document.getElementById('gsheetUrl').value || googleSheetUrl;
             if (!url) { showToast("Configure Google Sheets URL first"); return; }
+            
+            document.getElementById('gsheetStatus').innerHTML = '⏳ Loading from Google Sheets...';
+            
             try {
                 let response = await fetch(url, { method: 'GET', mode: 'cors' });
                 let data = await response.json();
                 if (data) {
                     if (data.sips) sips = data.sips;
                     if (data.stocks) stocks = data.stocks;
+                    if (data.mfs) mfs = data.mfs;
+                    if (data.bonds) bonds = data.bonds;
+                    if (data.metals) metals = data.metals;
                     if (data.businesses) businesses = data.businesses;
                     if (data.incomes) incomes = data.incomes;
+                    if (data.loans) loans = data.loans;
                     updateSIPStatuses();
                     renderAll();
                     saveData();
-                    showToast("Data restored from Google Sheets!");
+                    document.getElementById('gsheetStatus').innerHTML = '✅ Data loaded from Google Sheets!';
+                    showToast("Data loaded from Google Sheets!");
+                    setTimeout(() => document.getElementById('gsheetStatus').innerHTML = '', 3000);
                 }
-            } catch(e) { showToast("Download failed"); }
+            } catch(e) {
+                document.getElementById('gsheetStatus').innerHTML = '❌ Load failed';
+                showToast("Load failed");
+            }
         }
 
         // ==================== LOCAL BACKUP ====================
@@ -982,8 +1066,12 @@
                     let data = JSON.parse(event.target.result);
                     if (data.sips) sips = data.sips;
                     if (data.stocks) stocks = data.stocks;
+                    if (data.mfs) mfs = data.mfs;
+                    if (data.bonds) bonds = data.bonds;
+                    if (data.metals) metals = data.metals;
                     if (data.businesses) businesses = data.businesses;
                     if (data.incomes) incomes = data.incomes;
+                    if (data.loans) loans = data.loans;
                     updateSIPStatuses();
                     renderAll();
                     saveData();
@@ -1069,26 +1157,58 @@
             });
         });
 
-        // ==================== AUTO BACKUP TIMERS ====================
+        // ==================== MIGRATE OLD DATA ====================
+        function migrateOldData() {
+            const oldKeys = ['smartinvestor_complete_data', 'wealthtrack_data', 'smartinvestor_data'];
+            for (let key of oldKeys) {
+                let oldData = localStorage.getItem(key);
+                if (oldData) {
+                    try {
+                        let data = JSON.parse(oldData);
+                        if (data.sips) sips = data.sips;
+                        if (data.stocks) stocks = data.stocks;
+                        if (data.businesses) businesses = data.businesses;
+                        if (data.incomes) incomes = data.incomes;
+                        break;
+                    } catch(e) {}
+                }
+            }
+            
+            let saved = localStorage.getItem('smartinvestor_final_data');
+            if (saved) {
+                let data = JSON.parse(saved);
+                if (data.sips) sips = data.sips;
+                if (data.stocks) stocks = data.stocks;
+                if (data.businesses) businesses = data.businesses;
+                if (data.incomes) incomes = data.incomes;
+            }
+            
+            updateSIPStatuses();
+        }
+
+        // ==================== AUTO SAVE ====================
         setInterval(() => { if (sips.length || stocks.length) saveData(); }, 30000);
+
+        // ==================== OFFLINE DETECTION ====================
+        window.addEventListener('online', () => {
+            document.getElementById('offlineBadge').style.display = 'none';
+            showToast("📡 Back online!");
+        });
+        window.addEventListener('offline', () => {
+            document.getElementById('offlineBadge').style.display = 'block';
+            showToast("📡 You are offline. Data will sync when online.");
+        });
 
         // ==================== INITIALIZATION ====================
         migrateOldData();
         renderAll();
         
-        // Load settings
         let savedDays = localStorage.getItem('remindDays');
-        if (savedDays) {
-            reminderDays = parseInt(savedDays);
-            document.getElementById('remindDays').value = reminderDays;
-        }
+        if (savedDays) { reminderDays = parseInt(savedDays); document.getElementById('remindDays').value = reminderDays; }
         let savedUrl = localStorage.getItem('googleSheetUrl');
-        if (savedUrl) {
-            googleSheetUrl = savedUrl;
-            document.getElementById('gsheetUrl').value = savedUrl;
-        }
+        if (savedUrl) { googleSheetUrl = savedUrl; document.getElementById('gsheetUrl').value = savedUrl; }
         
-        showToast("🚀 Smart Investor Ready! Your existing data has been loaded.");
+        showToast("🚀 Smart Investor Ready! Configure Google Sheets URL for backup and CMP.");
     </script>
 </body>
 </html>
